@@ -1,0 +1,99 @@
+# ALFIE APP - RÈGLES DE DÉVELOPPEMENT
+
+## 📱 CONTEXTE DU PROJET
+Application mobile React Native / Expo pour mettre en relation des entreprises locales avec des ambassadeurs d'associations qui génèrent des leads.
+
+## 🎨 DESIGN SYSTEM
+### Couleurs
+- Primaire : #FF5B29 (Orange)
+- Fond : #F9F9F7 (Beige clair)
+- Surface : #FFFFFF
+- Texte principal : #1A1A1A
+- Texte secondaire : #6B6B6B
+
+### Polices
+- Titres : Montserrat (Bold/ExtraBold)
+- Textes : Nunito (Regular/SemiBold)
+
+### Espacement
+- Toujours utiliser `Spacing` du theme.ts
+- Chips : 40px de hauteur, border-radius généreux
+- Cartes : padding 20px, border-radius 20px
+
+### Border Radius
+- Généreux partout (12-24px)
+- Chips : complètement arrondis (999px)
+
+## 🗂️ STRUCTURE DU PROJET
+```
+src/
+  ├── components/     # Composants réutilisables
+  ├── screens/        # Écrans de l'app
+  ├── navigation/     # Navigation (stacks, tabs)
+  ├── config/         # Config Supabase
+  ├── types/          # Types TypeScript
+  └── theme.ts        # Thème global (TOUJOURS utiliser)
+```
+
+## ✅ RÈGLES OBLIGATOIRES
+
+### 1. Toujours utiliser le thème
+```typescript
+import { Colors, Spacing, Typography, CommonStyles, BorderRadius } from '../theme';
+```
+**JAMAIS** de couleurs en dur, **TOUJOURS** depuis theme.ts
+
+### 2. Structure des styles
+- Tous les styles dans `StyleSheet.create()` en bas du fichier
+- Utiliser `CommonStyles` pour les éléments répétitifs
+- Appliquer `fontFamily` sur TOUS les textes
+
+### 3. Filtres/Chips
+- Hauteur FIXE : 40px
+- Container : 64px de hauteur
+- Border-radius : `BorderRadius.round`
+- Utiliser `CommonStyles.chip`
+
+### 4. Navigation
+- HomeStack : Accueil, Liste entreprises, Fiche entreprise
+- LeadsStack : Mes leads, Détail lead
+- ProfileStack : Profil (à créer)
+
+### 5. Supabase
+- Types dans `types/database.types.ts`
+- Config dans `config/supabase.ts`
+- Toujours gérer les erreurs avec try/catch
+
+### 6. Composants
+- Props typés avec TypeScript
+- Toujours destructurer les props
+- Export default en bas du fichier
+
+## ❌ À NE JAMAIS FAIRE
+
+1. ❌ Couleurs en dur (#FF5B29 direct) → Utiliser `Colors.primary`
+2. ❌ Padding/margin en dur (20) → Utiliser `Spacing.xl`
+3. ❌ fontSize en dur (16) → Utiliser `Typography.size.lg`
+4. ❌ Oublier fontFamily sur les Text
+5. ❌ Créer des stacks sans les ajouter à AppNavigator
+6. ❌ Hauteur de chips variable → Toujours 40px fixe
+
+## 🔄 WORKFLOW DE DÉVELOPPEMENT
+
+1. **Lire la spec** (`spec_supabase_complet.md`)
+2. **Consulter theme.ts** avant tout style
+3. **Utiliser les composants existants** si possible
+4. **Tester** après chaque modification
+5. **Valider** avec l'utilisateur
+
+## 📦 PACKAGES UTILISÉS
+- expo
+- react-navigation
+- supabase-js
+- expo-font (@expo-google-fonts)
+- expo-vector-icons
+
+## 🎯 PRINCIPE DE TRAVAIL
+- **Itératif** : Valider chaque étape avant d'avancer
+- **Pas d'anticipation** : Ne coder que ce qui est demandé
+- **Questions** : Poser des questions plutôt qu'assumer
