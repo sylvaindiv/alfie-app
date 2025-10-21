@@ -27,8 +27,8 @@ export async function getEntrepriseLogoUrl(
   // Priorité 3 : Première photo de la galerie
   try {
     const { data: photos, error } = await supabase
-      .from('photo_entreprises')
-      .select('url_photo, storage_path')
+      .from('entreprises_photos')
+      .select('photo_url')
       .eq('entreprise_id', entreprise.id)
       .order('ordre_affichage', { ascending: true })
       .limit(1);
@@ -40,15 +40,18 @@ export async function getEntrepriseLogoUrl(
 
     if (photos && photos.length > 0) {
       const photo = photos[0];
-      // Si la photo est stockée dans Supabase Storage
-      if (photo.storage_path) {
+      // Construire l'URL publique depuis le bucket Storage
+      if (photo.photo_url) {
+        // Si l'URL est complète (commence par http), la retourner telle quelle
+        if (photo.photo_url.startsWith('http')) {
+          return photo.photo_url;
+        }
+        // Sinon construire l'URL depuis le bucket Supabase
         const { data } = supabase.storage
-          .from('galerie')
-          .getPublicUrl(photo.storage_path);
+          .from('entreprises-photos')
+          .getPublicUrl(photo.photo_url);
         return data.publicUrl;
       }
-      // Sinon utiliser l'URL externe
-      return photo.url_photo;
     }
   } catch (error) {
     console.error(

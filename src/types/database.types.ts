@@ -87,3 +87,11 @@ export interface EntrepriseCategorie {
   est_principale: boolean;
   created_at: string;
 }
+
+export interface EntreprisePhoto {
+  id: string;
+  entreprise_id: string;
+  photo_url: string;
+  ordre_affichage: number;
+  created_at: string;
+}

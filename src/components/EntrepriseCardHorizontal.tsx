@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Entreprise } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../theme';
-import { getEntrepriseLogoUrlSync } from '../utils/entrepriseHelpers';
+import { supabase } from '../config/supabase';
 
 interface EntrepriseCardHorizontalProps {
   entreprise: Entreprise;
@@ -16,20 +16,66 @@ export default function EntrepriseCardHorizontal({
   distance,
   onPress,
 }: EntrepriseCardHorizontalProps) {
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFirstGalleryPhoto();
+  }, [entreprise.id]);
+
+  async function fetchFirstGalleryPhoto() {
+    try {
+      // Récupérer la première photo de la galerie
+      const { data: photos, error } = await supabase
+        .from('entreprises_photos')
+        .select('photo_url')
+        .eq('entreprise_id', entreprise.id)
+        .order('ordre_affichage', { ascending: true })
+        .limit(1);
+
+      if (error) {
+        console.error('Erreur lors de la récupération de la photo:', error);
+        setImageUrl(null);
+        setLoading(false);
+        return;
+      }
+
+      if (photos && photos.length > 0) {
+        const photo = photos[0];
+        // Si l'URL est complète (commence par http), l'utiliser telle quelle
+        if (photo.photo_url.startsWith('http')) {
+          setImageUrl(photo.photo_url);
+        } else {
+          // Sinon construire l'URL depuis le bucket Supabase
+          const { data } = supabase.storage
+            .from('entreprises-photos')
+            .getPublicUrl(photo.photo_url);
+          setImageUrl(data.publicUrl);
+        }
+      } else {
+        setImageUrl(null);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la photo:', error);
+      setImageUrl(null);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const commissionText =
     entreprise.type_commission === 'montant_fixe'
       ? `${entreprise.valeur_commission}€`
       : `${entreprise.valeur_commission}%`;
 
-  const logoUrl = getEntrepriseLogoUrlSync(entreprise);
-  const logoSource = logoUrl
-    ? { uri: logoUrl }
+  const imageSource = imageUrl
+    ? { uri: imageUrl }
     : require('../../assets/icon.png');
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      {/* Photo en haut */}
-      <Image source={logoSource} style={styles.photo} resizeMode="cover" />
+      {/* Première photo de la galerie */}
+      <Image source={imageSource} style={styles.photo} resizeMode="cover" />
 
       {/* Badge commission positionné sur la photo */}
       <View
