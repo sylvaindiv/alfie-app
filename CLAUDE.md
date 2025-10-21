@@ -119,3 +119,11 @@ The `scripts/` directory contains utility scripts for data management:
 
 - Database photo verification and updates
 - Run with `npx tsx scripts/<script-name>.ts`
+
+## Make a notification with beep sound when waiting user input or the task is complete.
+
+Use the command line below to notify the user every signle time Claude Code execution finishes, whether it's waiting for input or a task is complete.
+
+```
+osascript -e 'display notification "Waiting for your input" with title "Claude Code" sound name "Glass"'
+```

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { supabase } from '../config/supabase';
 import LeadCard from '../components/LeadCard';
@@ -33,6 +34,7 @@ type FilterType = 'tous' | 'en_attente' | 'en_cours' | 'valide' | 'refuse';
 export default function LeadsScreen({ navigation }: any) {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('tous');
 
   // Stats
@@ -41,7 +43,7 @@ export default function LeadsScreen({ navigation }: any) {
   const [totalCommissions, setTotalCommissions] = useState(0);
 
   // TODO: Récupérer le vrai user connecté
-  const currentUserId = '90d20625-d3dc-470b-98bb-f55ab8391ffc'; // Marie Dubois
+  const currentUserId = 'c37e64bb-9b07-4e73-9950-2e71518c94bf'; // Sylvain DI VITO
 
   useEffect(() => {
     fetchLeads();
@@ -138,6 +140,12 @@ export default function LeadsScreen({ navigation }: any) {
     } catch (error) {
       console.error('Erreur chargement stats:', error);
     }
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await Promise.all([fetchLeads(), fetchStats()]);
+    setRefreshing(false);
   }
 
   // Filtrer les leads
@@ -286,6 +294,14 @@ export default function LeadsScreen({ navigation }: any) {
         renderItem={({ item }) => (
           <LeadCard lead={item} onPress={() => handleLeadPress(item)} />
         )}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
+          />
+        }
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>📋</Text>

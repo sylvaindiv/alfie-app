@@ -8,12 +8,13 @@ import {
   TouchableOpacity,
   Alert,
   Switch,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
 import { supabase } from '../config/supabase';
-import { signOut } from '../config/firebase';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AdminScreen from './AdminScreen';
 
 type ProfileScreenProps = {
   navigation: NativeStackNavigationProp<any>;
@@ -33,6 +34,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const [pushEnabled, setPushEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Charger les données utilisateur
   useEffect(() => {
@@ -320,6 +322,23 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           />
         </View>
       </View>
+      {/* SECTION : Administration (uniquement si admin) */}
+      {user.is_admin && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Administration</Text>
+          <TouchableOpacity
+            style={styles.adminRow}
+            onPress={() => setShowAdminModal(true)}
+          >
+            <View style={styles.legalContent}>
+              <Ionicons name="settings-outline" size={24} color={Colors.primary} />
+              <Text style={styles.adminText}>Gérer les catégories et entreprises</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* SECTION : Informations légales */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Informations légales</Text>
@@ -363,9 +382,9 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                   style: 'destructive',
                   onPress: async () => {
                     try {
-                      await signOut();
+                      await supabase.auth.signOut();
                       // La navigation se fera automatiquement via le listener
-                      // dans AppNavigator (onAuthStateChanged)
+                      // dans AppNavigator (onAuthStateChange)
                     } catch (error) {
                       console.error('Erreur déconnexion:', error);
                       Alert.alert('Erreur', 'Impossible de se déconnecter');
@@ -380,6 +399,25 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Modal Administration */}
+      <Modal
+        visible={showAdminModal}
+        animationType="slide"
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity
+              onPress={() => setShowAdminModal(false)}
+              style={styles.closeButton}
+            >
+              <Ionicons name="close" size={28} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+          <AdminScreen />
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -711,5 +749,36 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.body,
     fontWeight: Typography.weight.semiBold,
     color: Colors.error,
+  },
+  // === ADMIN ===
+  adminRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  adminText: {
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: Typography.weight.semiBold,
+    color: Colors.primary,
+  },
+  // === MODAL ===
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  modalHeader: {
+    paddingTop: Spacing.xxxl + 40,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  closeButton: {
+    alignSelf: 'flex-start',
   },
 });

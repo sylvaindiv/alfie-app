@@ -39,9 +39,6 @@ export default function LeadCard({ lead, onPress }: LeadCardProps) {
     year: 'numeric',
   });
 
-  // Icône type de lead
-  const typeIcon = lead.type_lead === 'auto_recommandation' ? '📸' : '📝';
-
   // Logo entreprise
   const logoSource = lead.entreprise.logo_url
     ? { uri: lead.entreprise.logo_url }
@@ -55,13 +52,9 @@ export default function LeadCard({ lead, onPress }: LeadCardProps) {
 
         {/* Infos */}
         <View style={styles.infoContainer}>
-          <View style={styles.topRow}>
-            <Text style={styles.nom} numberOfLines={1}>
-              {lead.entreprise.nom_commercial}
-            </Text>
-            {/* Icône type */}
-            <Text style={styles.typeIcon}>{typeIcon}</Text>
-          </View>
+          <Text style={styles.nom} numberOfLines={1}>
+            {lead.entreprise.nom_commercial}
+          </Text>
 
           {/* Date */}
           <Text style={styles.date}>{dateStr}</Text>
@@ -110,22 +103,12 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Spacing.md,
   },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
   nom: {
-    flex: 1,
     fontSize: Typography.size.lg,
     fontWeight: Typography.weight.bold,
     fontFamily: Typography.fontFamily.heading,
     color: Colors.textPrimary,
-    marginRight: Spacing.md,
-  },
-  typeIcon: {
-    fontSize: Typography.size.lg,
+    marginBottom: Spacing.xs,
   },
   date: {
     fontSize: Typography.size.sm,

@@ -12,11 +12,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  sendPhoneVerification,
-  verifyOTP,
-  AuthConfirmation,
-} from '../config/firebase';
 import { supabase } from '../config/supabase';
 import { User } from '../types/database.types';
 import {
@@ -42,9 +37,6 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
   // State pour téléphone et OTP
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
-  const [confirmation, setConfirmation] = useState<AuthConfirmation | null>(
-    null,
-  );
 
   // State pour onboarding
   const [prenom, setPrenom] = useState('');
@@ -67,8 +59,13 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
         ? phoneNumber
         : `+33${phoneNumber.substring(1)}`;
 
-      const confirm = await sendPhoneVerification(formattedPhone);
-      setConfirmation(confirm);
+      // Utiliser Supabase Auth avec OTP
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+      });
+
+      if (error) throw error;
+
       setStep('otp');
       Alert.alert('Succès', 'Code envoyé par SMS');
     } catch (error: any) {
@@ -86,24 +83,31 @@ export default function AuthScreen({ navigation }: AuthScreenProps) {
       return;
     }
 
-    if (!confirmation) {
-      Alert.alert('Erreur', 'Session expirée, recommencez');
-      return;
-    }
-
     setLoading(true);
     try {
-      const firebaseUser = await verifyOTP(confirmation, otp);
+      // Formater le numéro au format international
+      const formattedPhone = phoneNumber.startsWith('+')
+        ? phoneNumber
+        : `+33${phoneNumber.substring(1)}`;
 
-      if (!firebaseUser) {
+      // Vérifier l'OTP avec Supabase Auth
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otp,
+        type: 'sms',
+      });
+
+      if (error) throw error;
+
+      if (!data.user) {
         throw new Error('Échec de la vérification');
       }
 
-      // Vérifier si l'utilisateur existe déjà dans Supabase
+      // Vérifier si l'utilisateur existe déjà dans la table users
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
-        .eq('telephone', phoneNumber)
+        .eq('telephone', formattedPhone)
         .single();
 
       if (fetchError && fetchError.code !== 'PGRST116') {

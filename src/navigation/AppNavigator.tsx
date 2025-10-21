@@ -3,19 +3,21 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ActivityIndicator, View } from 'react-native';
-import { firebaseAuth } from '../config/firebase';
 
 // Import des écrans
 import AuthScreen from '../screens/AuthScreen';
 import HomeScreen from '../screens/HomeScreen';
 import EntreprisesListScreen from '../screens/EntreprisesListScreen';
 import EntrepriseDetailScreen from '../screens/EntrepriseDetailScreen';
+import FormulaireRecoScreen from '../screens/FormulaireRecoScreen';
+import PhotoRecoScreen from '../screens/PhotoRecoScreen';
+import ChoixTypeRecoScreen from '../screens/ChoixTypeRecoScreen';
 import LeadsScreen from '../screens/LeadsScreen';
 import LeadDetailScreen from '../screens/LeadDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { Colors } from '../theme';
+import { supabase } from '../config/supabase';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,6 +30,9 @@ function HomeStack() {
       <Stack.Screen name="HomeMain" component={HomeScreen} />
       <Stack.Screen name="EntreprisesList" component={EntreprisesListScreen} />
       <Stack.Screen name="EntrepriseDetail" component={EntrepriseDetailScreen} />
+      <Stack.Screen name="ChoixTypeReco" component={ChoixTypeRecoScreen} />
+      <Stack.Screen name="FormulaireReco" component={FormulaireRecoScreen} />
+      <Stack.Screen name="PhotoReco" component={PhotoRecoScreen} />
     </Stack.Navigator>
   );
 }
@@ -87,28 +92,36 @@ function MainTabNavigator() {
 }
 
 export default function AppNavigator() {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  // TEMPORAIRE : Bypass de l'authentification pour le développement
+  // Utilisateur hardcodé : Sylvain DI VITO (c37e64bb-9b07-4e73-9950-2e71518c94bf)
+  const DEV_MODE = true; // Mettre à false pour réactiver l'authentification
 
-  // Vérifier l'état d'authentification au démarrage
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(
+    DEV_MODE ? true : null,
+  );
+  const [loading, setLoading] = useState(!DEV_MODE);
+
+  // Vérifier l'état d'authentification au démarrage (sauf en mode dev)
   useEffect(() => {
-    const checkAuthState = async () => {
-      try {
-        // Vérifier si un utilisateur Firebase est connecté
-        const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
-          setIsAuthenticated(!!user);
-          setLoading(false);
-        });
+    if (DEV_MODE) {
+      // En mode dev, on skip l'authentification
+      return;
+    }
 
-        return unsubscribe;
-      } catch (error) {
-        console.error('Erreur vérification auth:', error);
-        setIsAuthenticated(false);
-        setLoading(false);
-      }
-    };
+    // Vérifier la session initiale
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setLoading(false);
+    });
 
-    checkAuthState();
+    // Écouter les changements d'état d'authentification
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // Écran de chargement pendant la vérification

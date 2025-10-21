@@ -185,12 +185,25 @@ export default function EntrepriseDetailScreen({
   }
 
   function handleCreateRecommandation() {
-    // TODO: Vérifier si user a une association
-    // TODO: Navigation vers choix type recommandation
-    Alert.alert(
-      'Recommandation',
-      `Créer une recommandation pour ${entreprise?.nom_commercial}`
-    );
+    if (!entreprise) return;
+
+    // Router vers le bon écran selon le type de recommandation autorisé
+    if (entreprise.type_recommandation_autorise === 'photo') {
+      // Auto-recommandation uniquement
+      navigation.navigate('PhotoReco', { entrepriseId: entreprise.id });
+    } else if (entreprise.type_recommandation_autorise === 'formulaire') {
+      // Recommandation de tiers uniquement
+      navigation.navigate('FormulaireReco', { entrepriseId: entreprise.id });
+    } else if (entreprise.type_recommandation_autorise === 'les_deux') {
+      // Choix entre les deux
+      navigation.navigate('ChoixTypeReco', { entrepriseId: entreprise.id });
+    } else {
+      // Cas de sécurité si le type n'est pas reconnu
+      Alert.alert(
+        'Erreur',
+        'Type de recommandation non configuré pour cette entreprise'
+      );
+    }
   }
 
   // Parser les horaires pour un affichage propre

@@ -11,6 +11,7 @@ export interface User {
   adresse_complete: string | null;
   role: 'ambassadeur' | 'gerant_asso' | 'gerant_entreprise' | 'admin';
   statut_onboarding: 'incomplet' | 'complet';
+  is_admin: boolean;
   created_at: string;
 }
 
@@ -53,9 +54,10 @@ export interface Entreprise {
   id: string;
   nom_commercial: string;
   logo_url: string | null;
+  logo_upload: string | null;
   description: string | null;
-  categorie_id: string;
-  sous_categorie_id: string;
+  categorie_id: string; // Gardé pour compatibilité - référence la catégorie principale
+  sous_categorie_id: string; // Gardé pour compatibilité - référence la sous-catégorie principale
   adresse: string;
   code_postal: string;
   ville: string;
@@ -74,5 +76,14 @@ export interface Entreprise {
   nb_leads_valides: number;
   nb_leads_refuses: number;
   total_commissions_versees: number;
+  created_at: string;
+}
+
+export interface EntrepriseCategorie {
+  id: string;
+  entreprise_id: string;
+  categorie_id: string;
+  sous_categorie_id: string;
+  est_principale: boolean;
   created_at: string;
 }

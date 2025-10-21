@@ -10,55 +10,200 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
+  FlatList,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
-import { CategorieEntreprise } from '../types/database.types';
-import CategoryCard from '../components/CategoryCard';
-import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../theme';
+import {
+  CategorieEntreprise,
+  SousCategorieEntreprise,
+  Entreprise,
+  User,
+  Association,
+} from '../types/database.types';
+import EntrepriseCardHorizontal from '../components/EntrepriseCardHorizontal';
+import {
+  Colors,
+  Spacing,
+  Typography,
+  BorderRadius,
+  Shadows,
+} from '../theme';
+
+interface CategorySection {
+  category: CategorieEntreprise;
+  sousCategories: SousCategorieEntreprise[];
+  entreprises: Entreprise[];
+}
 
 export default function HomeScreen({ navigation }: any) {
-  const [categories, setCategories] = useState<CategorieEntreprise[]>([]);
+  // User hardcodé pour le MVP
+  const USER_ID = 'c37e64bb-9b07-4e73-9950-2e71518c94bf'; // Sylvain DI VITO
+
+  const [categorySections, setCategorySections] = useState<CategorySection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // TODO: Récupérer le vrai user connecté + ses associations
-  const userName = 'Sylvain';
-  const userPhoto = 'https://labaguettedigitale.fr/wp-content/uploads/2024/12/picture-copy.png';
-  const associationLogos = [
-    'https://i.pravatar.cc/100?img=1',
-    'https://i.pravatar.cc/100?img=2',
-    'https://i.pravatar.cc/100?img=3',
-  ];
+  const [selectedSubCategories, setSelectedSubCategories] = useState<{
+    [categoryId: string]: string | null;
+  }>({});
+  const [user, setUser] = useState<User | null>(null);
+  const [userAssociations, setUserAssociations] = useState<Association[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [entreprisesBySubCategoryMap, setEntreprisesBySubCategoryMap] = useState<
+    Map<string, Set<string>>
+  >(new Map());
 
   useEffect(() => {
-    fetchCategories();
+    fetchAllData();
   }, []);
 
-  async function fetchCategories() {
+  async function fetchAllData() {
     try {
-      const { data, error } = await supabase
+      setRefreshing(true);
+      // Récupérer l'utilisateur
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', USER_ID)
+        .single();
+
+      if (userError) throw userError;
+      setUser(userData);
+
+      // Récupérer ses associations
+      const { data: assosData, error: assosError } = await supabase
+        .from('ambassadeurs')
+        .select(`
+          association:associations(*)
+        `)
+        .eq('user_id', USER_ID);
+
+      if (assosError) throw assosError;
+
+      // Extraire les associations de la réponse
+      const associations = (assosData || [])
+        .map((item: any) => item.association)
+        .filter((asso: any) => asso !== null);
+
+      setUserAssociations(associations);
+
+      // Récupérer toutes les catégories actives
+      const { data: categories, error: catError } = await supabase
         .from('categories_entreprise')
         .select('*')
         .eq('statut', 'active')
         .order('ordre_affichage', { ascending: true });
 
-      if (error) throw error;
+      if (catError) throw catError;
 
-      setCategories(data || []);
+      // Récupérer toutes les sous-catégories actives
+      const { data: sousCategories, error: sousError } = await supabase
+        .from('sous_categories_entreprise')
+        .select('*')
+        .eq('statut', 'active')
+        .order('ordre_affichage', { ascending: true });
+
+      if (sousError) throw sousError;
+
+      // Récupérer toutes les entreprises avec abonnement actif
+      const { data: entreprises, error: entError } = await supabase
+        .from('entreprises')
+        .select('*')
+        .eq('statut_abonnement', 'actif');
+
+      if (entError) throw entError;
+
+      // Récupérer TOUTES les associations entreprises-catégories
+      const { data: entreprisesCategories, error: ecError } = await supabase
+        .from('entreprises_categories')
+        .select('*');
+
+      if (ecError) throw ecError;
+
+      // Créer un map des entreprises par catégorie
+      const entreprisesByCategoryMap = new Map<string, Set<string>>();
+      const entreprisesBySubCategoryMap = new Map<string, Set<string>>();
+
+      (entreprisesCategories || []).forEach((ec) => {
+        // Ne garder que les catégories principales pour l'affichage des sections
+        if (ec.est_principale) {
+          if (!entreprisesByCategoryMap.has(ec.categorie_id)) {
+            entreprisesByCategoryMap.set(ec.categorie_id, new Set());
+          }
+          entreprisesByCategoryMap.get(ec.categorie_id)!.add(ec.entreprise_id);
+        }
+
+        // Toutes les sous-catégories pour le filtrage
+        if (!entreprisesBySubCategoryMap.has(ec.sous_categorie_id)) {
+          entreprisesBySubCategoryMap.set(ec.sous_categorie_id, new Set());
+        }
+        entreprisesBySubCategoryMap.get(ec.sous_categorie_id)!.add(ec.entreprise_id);
+      });
+
+      // Organiser les données par section de catégorie
+      const sections: CategorySection[] = (categories || []).map((category) => {
+        const sousCats = (sousCategories || []).filter(
+          (sc) => sc.categorie_id === category.id
+        );
+
+        // Filtrer les entreprises par catégorie principale
+        const entrepriseIdsInCategory = entreprisesByCategoryMap.get(category.id) || new Set();
+        const entreprisesInCategory = (entreprises || []).filter((ent) =>
+          entrepriseIdsInCategory.has(ent.id)
+        );
+
+        return {
+          category,
+          sousCategories: sousCats,
+          entreprises: entreprisesInCategory,
+        };
+      });
+
+      // Ne garder que les sections qui ont au moins une entreprise
+      const sectionsWithData = sections.filter(
+        (section) => section.entreprises.length > 0
+      );
+
+      setCategorySections(sectionsWithData);
+      setEntreprisesBySubCategoryMap(entreprisesBySubCategoryMap);
     } catch (error) {
-      console.error('Erreur chargement catégories:', error);
-      Alert.alert('Erreur', 'Impossible de charger les catégories');
+      console.error('Erreur chargement données:', error);
+      Alert.alert('Erreur', 'Impossible de charger les données');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
-  function handleCategoryPress(category: CategorieEntreprise) {
-    navigation.navigate('EntreprisesList', {
-      categorieId: category.id,
-      categorieNom: category.nom,
-    });
+  async function onRefresh() {
+    await fetchAllData();
+  }
+
+  function handleEntreprisePress(entreprise: Entreprise) {
+    navigation.navigate('EntrepriseDetail', { entrepriseId: entreprise.id });
+  }
+
+  function toggleSubCategory(categoryId: string, subCategoryId: string | null) {
+    setSelectedSubCategories((prev) => ({
+      ...prev,
+      [categoryId]: prev[categoryId] === subCategoryId ? null : subCategoryId,
+    }));
+  }
+
+  function getFilteredEntreprises(section: CategorySection) {
+    const selectedSubCat = selectedSubCategories[section.category.id];
+    if (!selectedSubCat) {
+      return section.entreprises;
+    }
+    // Utiliser la map des entreprises par sous-catégorie
+    const entrepriseIdsInSubCategory = entreprisesBySubCategoryMap.get(selectedSubCat);
+    if (!entrepriseIdsInSubCategory) {
+      return [];
+    }
+    return section.entreprises.filter((ent) =>
+      entrepriseIdsInSubCategory.has(ent.id)
+    );
   }
 
   if (loading) {
@@ -71,39 +216,66 @@ export default function HomeScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
+          />
+        }
+      >
         {/* Header avec photos */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.greetingLabel}>
-              Bonjour, <Text style={styles.greetingName}>{userName}.</Text>
+              Bonjour, <Text style={styles.greetingName}>{user?.prenom || 'Ambassadeur'}.</Text>
             </Text>
           </View>
 
           <View style={styles.headerRight}>
-            {/* Logos associations */}
-            <View style={styles.associationLogos}>
-              {associationLogos.slice(0, 3).map((logo, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: logo }}
-                  style={[
-                    styles.associationLogo,
-                    index > 0 && { marginLeft: -8 },
-                  ]}
-                />
-              ))}
-            </View>
+            {/* Logos associations ou bouton d'alerte */}
+            {userAssociations.length > 0 ? (
+              <View style={styles.associationLogos}>
+                {userAssociations.slice(0, 3).map((association, index) => (
+                  <Image
+                    key={association.id}
+                    source={{ uri: association.logo_url || 'https://via.placeholder.com/100' }}
+                    style={[
+                      styles.associationLogo,
+                      index > 0 && { marginLeft: -8 },
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.noAssociationButton}
+                onPress={() =>
+                  Alert.alert(
+                    'Aucune association',
+                    "Vous n'avez pas d'association attribuée"
+                  )
+                }
+              >
+                <Ionicons name="warning" size={20} color={Colors.surface} />
+              </TouchableOpacity>
+            )}
 
             {/* Photo profil */}
             <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-              <Image source={{ uri: userPhoto }} style={styles.profilePhoto} />
+              <Image
+                source={{ uri: user?.photo_profil_url || 'https://via.placeholder.com/150' }}
+                style={styles.profilePhoto}
+              />
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Question */}
-        <Text style={styles.question}>De quoi avez-vous besoin aujourd'hui ?</Text>
+        <Text style={styles.question}>De quoi avez-vous besoin ?</Text>
 
         {/* Barre de recherche */}
         <View style={styles.searchContainer}>
@@ -122,42 +294,100 @@ export default function HomeScreen({ navigation }: any) {
           />
         </View>
 
-        {/* Titre section */}
-        <Text style={styles.sectionTitle}>Catégories</Text>
+        {/* Sections par catégorie */}
+        {categorySections.length === 0 ? (
+          <Text style={styles.emptyText}>Aucune entreprise disponible</Text>
+        ) : (
+          categorySections.map((section) => {
+            const filteredEntreprises = getFilteredEntreprises(section);
+            return (
+              <View key={section.category.id} style={styles.categorySection}>
+                {/* Titre de la catégorie */}
+                <Text style={styles.categoryTitle}>{section.category.nom}</Text>
 
-        {/* Grille des catégories */}
-        <View style={styles.gridContainer}>
-          {categories.length === 0 ? (
-            <Text style={styles.emptyText}>Aucune catégorie disponible</Text>
-          ) : (
-            categories.map((item, index) => {
-              if (index % 2 === 0) {
-                return (
-                  <View key={item.id} style={styles.row}>
-                    <View style={styles.cardWrapper}>
-                      <CategoryCard
-                        nom={item.nom}
-                        imageUrl={item.icone_url}
-                        onPress={() => handleCategoryPress(item)}
+                {/* Filtres de sous-catégories */}
+                {section.sousCategories.length > 0 && (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filtersContainer}
+                  >
+                    {/* Chip "Tous" */}
+                    <TouchableOpacity
+                      style={[
+                        styles.filterChip,
+                        !selectedSubCategories[section.category.id] &&
+                          styles.filterChipActive,
+                      ]}
+                      onPress={() =>
+                        toggleSubCategory(section.category.id, null)
+                      }
+                    >
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          !selectedSubCategories[section.category.id] &&
+                            styles.filterChipTextActive,
+                        ]}
+                      >
+                        Tous
+                      </Text>
+                    </TouchableOpacity>
+
+                    {/* Chips des sous-catégories */}
+                    {section.sousCategories.map((sousCat) => {
+                      const isSelected =
+                        selectedSubCategories[section.category.id] ===
+                        sousCat.id;
+                      return (
+                        <TouchableOpacity
+                          key={sousCat.id}
+                          style={[
+                            styles.filterChip,
+                            isSelected && styles.filterChipActive,
+                          ]}
+                          onPress={() =>
+                            toggleSubCategory(section.category.id, sousCat.id)
+                          }
+                        >
+                          <Text
+                            style={[
+                              styles.filterChipText,
+                              isSelected && styles.filterChipTextActive,
+                            ]}
+                          >
+                            {sousCat.nom}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+
+                {/* Liste des entreprises en scroll horizontal */}
+                {filteredEntreprises.length === 0 ? (
+                  <Text style={styles.emptySubText}>
+                    Aucune entreprise dans cette catégorie
+                  </Text>
+                ) : (
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.entreprisesScrollContainer}
+                  >
+                    {filteredEntreprises.map((entreprise) => (
+                      <EntrepriseCardHorizontal
+                        key={entreprise.id}
+                        entreprise={entreprise}
+                        onPress={() => handleEntreprisePress(entreprise)}
                       />
-                    </View>
-                    {categories[index + 1] && (
-                      <View style={styles.cardWrapper}>
-                        <CategoryCard
-                          nom={categories[index + 1].nom}
-                          imageUrl={categories[index + 1].icone_url}
-                          onPress={() => handleCategoryPress(categories[index + 1])}
-                        />
-                      </View>
-                    )}
-                    {!categories[index + 1] && <View style={styles.cardWrapper} />}
-                  </View>
-                );
-              }
-              return null;
-            })
-          )}
-        </View>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            );
+          })
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -210,9 +440,20 @@ const styles = StyleSheet.create({
     marginRight: Spacing.sm,
   },
   associationLogo: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 21.5,
+    borderWidth: 2,
+    borderColor: Colors.background,
+  },
+  noAssociationButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: Colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: Spacing.sm,
     borderWidth: 2,
     borderColor: Colors.background,
   },
@@ -224,7 +465,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.background,
   },
   question: {
-    fontSize: Typography.size.xxl,
+    fontSize: Typography.size.huge,
     fontFamily: Typography.fontFamily.heading,
     fontWeight: Typography.weight.bold,
     color: Colors.textPrimary,
@@ -238,7 +479,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.surface,
     marginHorizontal: Spacing.xl,
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.xxxl,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
     height: 52,
@@ -253,25 +494,53 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.body,
     color: Colors.textPrimary,
   },
-  sectionTitle: {
-    fontSize: Typography.size.xl,
+  categorySection: {
+    marginBottom: Spacing.xxxl,
+  },
+  categoryTitle: {
+    fontSize: Typography.size.xxl,
     fontFamily: Typography.fontFamily.heading,
     fontWeight: Typography.weight.bold,
     color: Colors.textPrimary,
     paddingHorizontal: Spacing.xl,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xs,
+
   },
-  gridContainer: {
-    paddingHorizontal: Spacing.md,
+  filtersContainer: {
+    paddingLeft: Spacing.xl,
+    paddingRight: Spacing.xl,
+    marginBottom: Spacing.md,
+    gap: Spacing.sm,
   },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.lg,
+  filterChip: {
+    paddingLeft: 0,
+    paddingRight: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginRight: Spacing.lg,
+    minHeight: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  cardWrapper: {
-    flex: 1,
-    marginHorizontal: Spacing.sm,
+  filterChipFirst: {
+    paddingLeft: 5,
+  },
+  filterChipActive: {
+    backgroundColor: 'transparent',
+  },
+  filterChipText: {
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: Typography.weight.regular,
+    color: '#8A8A8A',
+    includeFontPadding: false,
+  },
+  filterChipTextActive: {
+    color: Colors.primary,
+    fontWeight: Typography.weight.bold,
+  },
+  entreprisesScrollContainer: {
+    paddingHorizontal: Spacing.xl,
+    paddingBottom: Spacing.sm,
   },
   emptyText: {
     textAlign: 'center',
@@ -279,5 +548,14 @@ const styles = StyleSheet.create({
     fontFamily: Typography.fontFamily.body,
     color: Colors.textSecondary,
     marginTop: 40,
+    paddingHorizontal: Spacing.xl,
+  },
+  emptySubText: {
+    textAlign: 'center',
+    fontSize: Typography.size.base,
+    fontFamily: Typography.fontFamily.body,
+    color: Colors.textDisabled,
+    marginTop: Spacing.lg,
+    fontStyle: 'italic',
   },
 });

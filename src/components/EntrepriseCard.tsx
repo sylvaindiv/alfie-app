@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Entreprise } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
+import { getEntrepriseLogoUrlSync } from '../utils/entrepriseHelpers';
 
 interface EntrepriseCardProps {
   entreprise: Entreprise;
@@ -20,8 +21,9 @@ export default function EntrepriseCard({
       ? `${entreprise.valeur_commission}€`
       : `${entreprise.valeur_commission}%`;
 
-  const logoSource = entreprise.logo_url
-    ? { uri: entreprise.logo_url }
+  const logoUrl = getEntrepriseLogoUrlSync(entreprise);
+  const logoSource = logoUrl
+    ? { uri: logoUrl }
     : require('../../assets/icon.png');
 
   return (
