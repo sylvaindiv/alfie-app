@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Entreprise } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius, getShadow } from '../theme';
 import { supabase } from '../config/supabase';
@@ -74,37 +74,39 @@ export default function EntrepriseCardHorizontal({
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.9}>
-      {/* Première photo de la galerie */}
-      <Image source={imageSource} style={styles.photo} resizeMode="cover" />
+      <View style={styles.content}>
+        {/* Première photo de la galerie */}
+        <Image source={imageSource} style={styles.photo} resizeMode="cover" />
 
-      {/* Badge commission positionné sur la photo */}
-      <View
-        style={[
-          styles.badge,
-          entreprise.type_commission === 'pourcentage' && styles.badgePercentage,
-        ]}
-      >
-        <Text style={styles.badgeText}>{commissionText}</Text>
-      </View>
+        {/* Badge commission positionné sur la photo */}
+        <View
+          style={[
+            styles.badge,
+            entreprise.type_commission === 'pourcentage' && styles.badgePercentage,
+          ]}
+        >
+          <Text style={styles.badgeText}>{commissionText}</Text>
+        </View>
 
-      {/* Informations en dessous */}
-      <View style={styles.infoContainer}>
-        {/* Nom */}
-        <Text style={styles.nom} numberOfLines={2}>
-          {entreprise.nom_commercial}
-        </Text>
-
-        {/* Ville + Distance */}
-        <View style={styles.locationRow}>
-          <Ionicons
-            name="location-outline"
-            size={14}
-            color={Colors.textSecondary}
-          />
-          <Text style={styles.ville} numberOfLines={1}>
-            {entreprise.ville}
-            {distance && ` • ${distance.toFixed(1)} km`}
+        {/* Informations en dessous */}
+        <View style={styles.infoContainer}>
+          {/* Nom */}
+          <Text style={styles.nom} numberOfLines={2}>
+            {entreprise.nom_commercial}
           </Text>
+
+          {/* Ville + Distance */}
+          <View style={styles.locationRow}>
+            <Feather
+              name="map-pin"
+              size={14}
+              color={Colors.textSecondary}
+            />
+            <Text style={styles.ville} numberOfLines={1}>
+              {entreprise.ville}
+              {distance && ` • ${distance.toFixed(1)} km`}
+            </Text>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -117,12 +119,16 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     width: 180,
     marginRight: Spacing.lg,
-    overflow: 'hidden',
+    marginBottom: Spacing.md,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 4,
+  },
+  content: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
   },
   photo: {
     width: '100%',

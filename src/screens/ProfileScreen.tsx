@@ -10,7 +10,7 @@ import {
   Switch,
   Modal,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
 import { supabase } from '../config/supabase';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -112,12 +112,12 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             />
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="person" size={60} color={Colors.textSecondary} />
+              <Feather name="user" size={54} color={Colors.textSecondary} />
             </View>
           )}
           {/* Bouton modifier photo */}
           <TouchableOpacity style={styles.editPhotoButton}>
-            <Ionicons name="camera" size={20} color={Colors.textOnPrimary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
+            <Feather name="camera" size={18} color={Colors.textOnPrimary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
           </TouchableOpacity>
         </View>
 
@@ -128,7 +128,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
 
         {/* Téléphone (non modifiable) */}
         <View style={styles.phoneContainer}>
-          <Ionicons name="call-outline" size={16} color={Colors.textSecondary} />
+          <Feather name="phone" size={12} color={Colors.textSecondary} />
           <Text style={styles.phone}>{user.telephone}</Text>
         </View>
       </View>
@@ -140,7 +140,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={styles.infoRow}>
           <View style={styles.infoContent}>
             <View style={styles.infoIconLabel}>
-              <Ionicons name="mail-outline" size={20} color={Colors.textSecondary} />
+              <Feather name="mail" size={18} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Email</Text>
             </View>
             <Text style={styles.infoValue}>
@@ -148,7 +148,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             </Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="pencil" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
+            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
           </TouchableOpacity>
         </View>
 
@@ -156,13 +156,13 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={styles.infoRow}>
           <View style={styles.infoContent}>
             <View style={styles.infoIconLabel}>
-              <Ionicons name="location-outline" size={20} color={Colors.textSecondary} />
+              <Feather name="map-pin" size={18} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Code postal</Text>
             </View>
             <Text style={styles.infoValue}>{user.code_postal}</Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="pencil" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
+            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
           </TouchableOpacity>
         </View>
 
@@ -170,7 +170,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={styles.infoRow}>
           <View style={styles.infoContent}>
             <View style={styles.infoIconLabel}>
-              <Ionicons name="home-outline" size={20} color={Colors.textSecondary} />
+              <Feather name="home" size={18} color={Colors.textSecondary} />
               <Text style={styles.infoLabel}>Adresse complète</Text>
             </View>
             <Text style={styles.infoValue}>
@@ -178,7 +178,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             </Text>
           </View>
           <TouchableOpacity style={styles.editButton}>
-            <Ionicons name="pencil" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
+            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
           </TouchableOpacity>
         </View>
       </View>
@@ -198,7 +198,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 />
               ) : (
                 <View style={styles.assoLogoPlaceholder}>
-                  <Ionicons name="business" size={24} color={Colors.textSecondary} />
+                  <Feather name="briefcase" size={22} color={Colors.textSecondary} />
                 </View>
               )}
               <Text style={styles.assoName}>
@@ -212,7 +212,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 style={styles.removeButton}
                 onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
               >
-                <Ionicons name="close-circle" size={24} color={Colors.error} />
+                <Feather name="x-circle" size={22} color={Colors.error} />
               </TouchableOpacity>
             )}
           </View>
@@ -221,7 +221,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         {/* Message si aucune association */}
         {associations.length === 0 && (
           <View style={styles.emptyState}>
-            <Ionicons name="alert-circle-outline" size={48} color={Colors.textDisabled} />
+            <Feather name="alert-circle" size={44} color={Colors.textDisabled} />
             <Text style={styles.emptyText}>
               Aucune association pour le moment
             </Text>
@@ -233,7 +233,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           style={styles.addButton}
           onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')}
         >
-          <Ionicons name="add-circle" size={24} color={Colors.primary} />
+          <Feather name="plus-circle" size={22} color={Colors.primary} />
           <Text style={styles.addButtonText}>Ajouter une association</Text>
         </TouchableOpacity>
       </View>
@@ -245,7 +245,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           {/* Deals créés */}
           <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: Colors.info + '20' }]}>
-              <Ionicons name="add-circle" size={28} color={Colors.info} />
+              <Feather name="plus-circle" size={22} color={Colors.info} />
             </View>
             <Text style={styles.statValue}>{stats.dealsCreated}</Text>
             <Text style={styles.statLabel}>Deals créés</Text>
@@ -254,7 +254,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           {/* Deals validés */}
           <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: Colors.success + '20' }]}>
-              <Ionicons name="checkmark-circle" size={28} color={Colors.success} />
+              <Feather name="check-circle" size={22} color={Colors.success} />
             </View>
             <Text style={styles.statValue}>{stats.dealsValidated}</Text>
             <Text style={styles.statLabel}>Validés</Text>
@@ -263,7 +263,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           {/* Total commissions */}
           <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: Colors.primary + '20' }]}>
-              <Ionicons name="cash" size={28} color={Colors.primary} />
+              <Feather name="dollar-sign" size={22} color={Colors.primary} />
             </View>
             <Text style={styles.statValue}>{stats.totalCommissions.toFixed(0)}€</Text>
             <Text style={styles.statLabel}>Commissions</Text>
@@ -278,7 +278,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={styles.notifRow}>
           <View style={styles.notifContent}>
             <View style={styles.notifIconLabel}>
-              <Ionicons name="notifications-outline" size={24} color={Colors.textSecondary} />
+              <Feather name="bell" size={22} color={Colors.textSecondary} />
               <View style={styles.notifTextContainer}>
                 <Text style={styles.notifLabel}>Notifications push</Text>
                 <Text style={styles.notifSubtext}>
@@ -302,7 +302,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <View style={styles.notifRow}>
           <View style={styles.notifContent}>
             <View style={styles.notifIconLabel}>
-              <Ionicons name="mail-outline" size={24} color={Colors.textSecondary} />
+              <Feather name="mail" size={22} color={Colors.textSecondary} />
               <View style={styles.notifTextContainer}>
                 <Text style={styles.notifLabel}>Notifications email</Text>
                 <Text style={styles.notifSubtext}>
@@ -331,10 +331,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             onPress={() => setShowAdminModal(true)}
           >
             <View style={styles.legalContent}>
-              <Ionicons name="settings-outline" size={24} color={Colors.primary} />
+              <Feather name="settings" size={22} color={Colors.primary} />
               <Text style={styles.adminText}>Gérer les catégories et entreprises</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={Colors.primary} />
+            <Feather name="chevron-right" size={18} color={Colors.primary} />
           </TouchableOpacity>
         </View>
       )}
@@ -349,10 +349,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           onPress={() => Alert.alert('CGU', 'Page à venir')}
         >
           <View style={styles.legalContent}>
-            <Ionicons name="document-text-outline" size={24} color={Colors.textSecondary} />
+            <Feather name="file-text" size={22} color={Colors.textSecondary} />
             <Text style={styles.legalText}>Conditions générales d'utilisation</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textDisabled} />
+          <Feather name="chevron-right" size={18} color={Colors.textDisabled} />
         </TouchableOpacity>
 
         {/* Politique de confidentialité */}
@@ -361,10 +361,10 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           onPress={() => Alert.alert('Confidentialité', 'Page à venir')}
         >
           <View style={styles.legalContent}>
-            <Ionicons name="shield-checkmark-outline" size={24} color={Colors.textSecondary} />
+            <Feather name="shield" size={22} color={Colors.textSecondary} />
             <Text style={styles.legalText}>Politique de confidentialité</Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textDisabled} />
+          <Feather name="chevron-right" size={18} color={Colors.textDisabled} />
         </TouchableOpacity>
       </View>
       {/* BOUTON DÉCONNEXION */}
@@ -395,7 +395,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             );
           }}
         >
-          <Ionicons name="log-out-outline" size={24} color={Colors.error} />
+          <Feather name="log-out" size={22} color={Colors.error} />
           <Text style={styles.logoutText}>Se déconnecter</Text>
         </TouchableOpacity>
       </View>
@@ -412,7 +412,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
               onPress={() => setShowAdminModal(false)}
               style={styles.closeButton}
             >
-              <Ionicons name="close" size={28} color={Colors.text} />
+              <Feather name="x" size={22} color={Colors.text} />
             </TouchableOpacity>
           </View>
           <AdminScreen />
@@ -515,16 +515,12 @@ const styles = StyleSheet.create({
   },
   // === SECTION ===
   section: {
-    backgroundColor: Colors.surface,
     marginTop: Spacing.lg,
     paddingVertical: Spacing.xl,
     paddingHorizontal: Spacing.xl,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: Colors.border,
   },
   sectionTitle: {
-    fontSize: Typography.size.lg,
+    fontSize: Typography.size.xxl,
     fontWeight: Typography.weight.bold,
     fontFamily: Typography.fontFamily.heading,
     color: Colors.textPrimary,

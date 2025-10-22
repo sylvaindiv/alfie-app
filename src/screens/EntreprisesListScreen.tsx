@@ -10,7 +10,7 @@ import {
   ScrollView,
   Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Entreprise, SousCategorieEntreprise } from '../types/database.types';
 import EntrepriseCard from '../components/EntrepriseCard';
@@ -99,7 +99,7 @@ export default function EntreprisesListScreen({
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Feather name="arrow-left" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{categorieNom}</Text>
         <View style={{ width: 24 }} />
@@ -178,7 +178,7 @@ export default function EntreprisesListScreen({
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="business-outline" size={64} color={Colors.textDisabled} />
+            <Feather name="briefcase" size={56} color={Colors.textDisabled} />
             <Text style={styles.emptyText}>
               Aucune entreprise dans cette catégorie
             </Text>
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
   },
   emptyContainer: {

@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Switch,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Association, Entreprise, User } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius, CommonStyles, getShadow } from '../theme';
@@ -237,7 +237,7 @@ export default function FormulaireRecoScreen({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Feather name="arrow-left" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nouvelle recommandation</Text>
         <View style={styles.headerPlaceholder} />
@@ -391,7 +391,7 @@ export default function FormulaireRecoScreen({
             <ActivityIndicator color={Colors.surface} />
           ) : (
             <>
-              <Ionicons name="paper-plane" size={20} color={Colors.surface} />
+              <Feather name="send" size={18} color={Colors.surface} />
               <Text style={styles.submitButtonText}>Envoyer la recommandation</Text>
             </>
           )}

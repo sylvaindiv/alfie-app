@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   ActivityIndicator,
   SafeAreaView,
   TouchableOpacity,
@@ -39,7 +38,6 @@ export default function DealsScreen({ navigation }: any) {
 
   // Stats
   const [validesThisMonth, setValidesThisMonth] = useState(0);
-  const [totalValidesThisMonth, setTotalValidesThisMonth] = useState(0);
   const [totalCommissions, setTotalCommissions] = useState(0);
 
   // TODO: Récupérer le vrai user connecté
@@ -115,13 +113,8 @@ export default function DealsScreen({ navigation }: any) {
       if (errorValides) throw errorValides;
 
       const countValides = validesData.length;
-      const totalValides = validesData.reduce(
-        (sum, deal) => sum + (deal.montant_commission || 0),
-        0
-      );
 
       setValidesThisMonth(countValides);
-      setTotalValidesThisMonth(totalValides);
 
       // Total commissions (depuis ambassadeurs)
       const { data: ambassadeurData, error: errorAmbassadeur } = await supabase
@@ -170,130 +163,10 @@ export default function DealsScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mes recommandations</Text>
-      </View>
-
-      {/* Stats cards */}
-      <View style={styles.statsContainer}>
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>✅ Validées ce mois</Text>
-          <Text style={styles.statValue}>{validesThisMonth}</Text>
-          <Text style={styles.statSubValue}>
-            {totalValidesThisMonth.toFixed(0)}€
-          </Text>
-        </View>
-
-        <View style={styles.statCard}>
-          <Text style={styles.statLabel}>💰 Total</Text>
-          <Text style={styles.statValue}>{totalCommissions.toFixed(0)}€</Text>
-          <Text style={styles.statSubValue}>Commissions générées</Text>
-        </View>
-      </View>
-
-      {/* Filtres statuts */}
-      <View style={styles.filtersContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filtersContent}
-        >
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedFilter === 'tous' && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter('tous')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedFilter === 'tous' && styles.filterChipTextActive,
-              ]}
-            >
-              Tous
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedFilter === 'en_attente' && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter('en_attente')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedFilter === 'en_attente' && styles.filterChipTextActive,
-              ]}
-            >
-              En attente
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedFilter === 'en_cours' && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter('en_cours')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedFilter === 'en_cours' && styles.filterChipTextActive,
-              ]}
-            >
-              En cours
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedFilter === 'valide' && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter('valide')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedFilter === 'valide' && styles.filterChipTextActive,
-              ]}
-            >
-              Validés
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.filterChip,
-              selectedFilter === 'refuse' && styles.filterChipActive,
-            ]}
-            onPress={() => setSelectedFilter('refuse')}
-          >
-            <Text
-              style={[
-                styles.filterChipText,
-                selectedFilter === 'refuse' && styles.filterChipTextActive,
-              ]}
-            >
-              Refusés
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </View>
-
-      {/* Liste des deals */}
-      <FlatList
-        data={dealsFiltres}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
-        renderItem={({ item }) => (
-          <DealCard deal={item} onPress={() => handleDealPress(item)} />
-        )}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        stickyHeaderIndices={[2]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -302,25 +175,149 @@ export default function DealsScreen({ navigation }: any) {
             tintColor={Colors.primary}
           />
         }
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>📋</Text>
-            <Text style={styles.emptyText}>
-              {selectedFilter === 'tous'
-                ? 'Aucune recommandation pour le moment'
-                : `Aucune recommandation ${
-                    selectedFilter === 'en_attente'
-                      ? 'en attente'
-                      : selectedFilter === 'en_cours'
-                      ? 'en cours'
-                      : selectedFilter === 'valide'
-                      ? 'validée'
-                      : 'refusée'
-                  }`}
-            </Text>
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Mes Deals</Text>
+        </View>
+
+        {/* Stats cards */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>✅ Validées ce mois</Text>
+            <Text style={styles.statValue}>{validesThisMonth}</Text>
           </View>
-        }
-      />
+
+          <View style={styles.statCard}>
+            <Text style={styles.statLabel}>💰 Total</Text>
+            <Text style={styles.statValue}>{totalCommissions.toFixed(0)}€</Text>
+          </View>
+        </View>
+
+        {/* Filtres statuts - sticky */}
+        <View style={styles.filtersContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filtersContent}
+          >
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedFilter === 'tous' && styles.filterChipActive,
+              ]}
+              onPress={() => setSelectedFilter('tous')}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedFilter === 'tous' && styles.filterChipTextActive,
+                ]}
+              >
+                Tous
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedFilter === 'en_attente' && styles.filterChipActive,
+              ]}
+              onPress={() => setSelectedFilter('en_attente')}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedFilter === 'en_attente' && styles.filterChipTextActive,
+                ]}
+              >
+                En attente
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedFilter === 'en_cours' && styles.filterChipActive,
+              ]}
+              onPress={() => setSelectedFilter('en_cours')}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedFilter === 'en_cours' && styles.filterChipTextActive,
+                ]}
+              >
+                En cours
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedFilter === 'valide' && styles.filterChipActive,
+              ]}
+              onPress={() => setSelectedFilter('valide')}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedFilter === 'valide' && styles.filterChipTextActive,
+                ]}
+              >
+                Validés
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.filterChip,
+                selectedFilter === 'refuse' && styles.filterChipActive,
+              ]}
+              onPress={() => setSelectedFilter('refuse')}
+            >
+              <Text
+                style={[
+                  styles.filterChipText,
+                  selectedFilter === 'refuse' && styles.filterChipTextActive,
+                ]}
+              >
+                Refusés
+              </Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* Liste des deals */}
+        <View style={styles.listContainer}>
+          {dealsFiltres.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyEmoji}>📋</Text>
+              <Text style={styles.emptyText}>
+                {selectedFilter === 'tous'
+                  ? 'Aucune recommandation pour le moment'
+                  : `Aucune recommandation ${
+                      selectedFilter === 'en_attente'
+                        ? 'en attente'
+                        : selectedFilter === 'en_cours'
+                        ? 'en cours'
+                        : selectedFilter === 'valide'
+                        ? 'validée'
+                        : 'refusée'
+                    }`}
+              </Text>
+            </View>
+          ) : (
+            dealsFiltres.map((deal) => (
+              <DealCard
+                key={deal.id}
+                deal={deal}
+                onPress={() => handleDealPress(deal)}
+              />
+            ))
+          )}
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -336,48 +333,57 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.background,
   },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
   header: {
-    ...CommonStyles.screenHeader,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.xl,
+    backgroundColor: Colors.background,
   },
   headerTitle: {
     fontSize: Typography.size.xxxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: Typography.weight.bold as any,
     color: Colors.textPrimary,
   },
   statsContainer: {
     flexDirection: 'row',
     paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
     gap: Spacing.md,
+    backgroundColor: Colors.background,
+    zIndex: 2,
   },
   statCard: {
     flex: 1,
     ...CommonStyles.card,
+    paddingVertical: Spacing.md,
   },
   statLabel: {
     fontSize: Typography.size.xs,
     fontFamily: Typography.fontFamily.body,
     color: Colors.textSecondary,
-    marginBottom: Spacing.sm,
-  },
-  statValue: {
-    fontSize: Typography.size.xxxl,
-    fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
-    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
-  statSubValue: {
-    fontSize: Typography.size.xs,
-    fontFamily: Typography.fontFamily.body,
-    color: Colors.textSecondary,
+  statValue: {
+    fontSize: Typography.size.xxl,
+    fontFamily: Typography.fontFamily.heading,
+    fontWeight: Typography.weight.bold as any,
+    color: Colors.textPrimary,
   },
   filtersContainer: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    backgroundColor: Colors.background,
     height: 64,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+    zIndex: 1,
   },
   filtersContent: {
     paddingHorizontal: Spacing.lg,
@@ -400,7 +406,7 @@ const styles = StyleSheet.create({
   filterChipText: {
     fontSize: Typography.size.base,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.textSecondary,
   },
   filterChipTextActive: {
@@ -410,6 +416,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.xl,
+    gap: Spacing.md,
   },
   emptyContainer: {
     alignItems: 'center',

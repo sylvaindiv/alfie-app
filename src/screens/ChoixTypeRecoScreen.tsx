@@ -8,7 +8,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Entreprise } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius, CommonStyles, getShadow } from '../theme';
@@ -74,7 +74,7 @@ export default function ChoixTypeRecoScreen({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Feather name="arrow-left" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Recommandation</Text>
         <View style={styles.headerPlaceholder} />
@@ -97,7 +97,7 @@ export default function ChoixTypeRecoScreen({
           >
             <View style={styles.optionContent}>
               <View style={[styles.optionIconContainer, { backgroundColor: Colors.primary + '15' }]}>
-                <Ionicons name="camera" size={32} color={Colors.primary} />
+                <Feather name="camera" size={28} color={Colors.primary} />
               </View>
               <View style={styles.optionTextContainer}>
                 <Text style={styles.optionTitle}>J'ai déjà consommé</Text>
@@ -107,7 +107,7 @@ export default function ChoixTypeRecoScreen({
               </View>
             </View>
             <View style={styles.optionBadge}>
-              <Ionicons name="flash" size={16} color={Colors.warning} />
+              <Feather name="zap" size={12} color={Colors.warning} />
               <Text style={styles.optionBadgeText}>Validation requise</Text>
             </View>
           </TouchableOpacity>
@@ -127,7 +127,7 @@ export default function ChoixTypeRecoScreen({
           >
             <View style={styles.optionContent}>
               <View style={[styles.optionIconContainer, { backgroundColor: Colors.info + '15' }]}>
-                <Ionicons name="call" size={32} color={Colors.info} />
+                <Feather name="phone" size={28} color={Colors.info} />
               </View>
               <View style={styles.optionTextContainer}>
                 <Text style={styles.optionTitle}>Demande de rappel</Text>
@@ -137,7 +137,7 @@ export default function ChoixTypeRecoScreen({
               </View>
             </View>
             <View style={[styles.optionBadge, { backgroundColor: Colors.info + '15' }]}>
-              <Ionicons name="document-text" size={16} color={Colors.info} />
+              <Feather name="file-text" size={12} color={Colors.info} />
               <Text style={[styles.optionBadgeText, { color: Colors.info }]}>Formulaire simple</Text>
             </View>
           </TouchableOpacity>
@@ -146,7 +146,7 @@ export default function ChoixTypeRecoScreen({
         {/* Info rétribution */}
         {entreprise && (
           <View style={styles.commissionInfo}>
-            <Ionicons name="gift-outline" size={20} color={Colors.success} />
+            <Feather name="gift" size={18} color={Colors.success} />
             <Text style={styles.commissionText}>
               Rétribution possible :{' '}
               <Text style={styles.commissionAmount}>

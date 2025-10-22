@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../config/supabase';
 import { Association, Entreprise } from '../types/database.types';
@@ -289,7 +289,7 @@ export default function PhotoRecoScreen({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Feather name="arrow-left" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Preuve d'achat</Text>
         <View style={styles.headerPlaceholder} />
@@ -304,7 +304,7 @@ export default function PhotoRecoScreen({
 
         {/* Instructions */}
         <View style={styles.instructionsCard}>
-          <Ionicons name="information-circle" size={24} color={Colors.info} />
+          <Feather name="info" size={22} color={Colors.info} />
           <Text style={styles.instructionsText}>
             Prenez en photo votre ticket de caisse ou votre preuve d'achat pour valider votre recommandation.
           </Text>
@@ -319,12 +319,12 @@ export default function PhotoRecoScreen({
                 style={styles.removePhotoButton}
                 onPress={() => setPhotoUri(null)}
               >
-                <Ionicons name="close-circle" size={32} color={Colors.error} />
+                <Feather name="x-circle" size={28} color={Colors.error} />
               </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.photoPlaceholder}>
-              <Ionicons name="camera-outline" size={64} color={Colors.textDisabled} />
+              <Feather name="camera" size={56} color={Colors.textDisabled} />
               <Text style={styles.photoPlaceholderText}>Aucune photo sélectionnée</Text>
             </View>
           )}
@@ -333,12 +333,12 @@ export default function PhotoRecoScreen({
         {/* Boutons photo */}
         <View style={styles.photoButtonsContainer}>
           <TouchableOpacity style={styles.photoButton} onPress={takePhoto}>
-            <Ionicons name="camera" size={24} color={Colors.surface} />
+            <Feather name="camera" size={22} color={Colors.surface} />
             <Text style={styles.photoButtonText}>Prendre une photo</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.photoButton} onPress={pickFromGallery}>
-            <Ionicons name="images" size={24} color={Colors.surface} />
+            <Feather name="image" size={22} color={Colors.surface} />
             <Text style={styles.photoButtonText}>Depuis la galerie</Text>
           </TouchableOpacity>
         </View>
@@ -382,7 +382,7 @@ export default function PhotoRecoScreen({
         {/* Commission info */}
         {entreprise && (
           <View style={styles.commissionCard}>
-            <Ionicons name="gift-outline" size={20} color={Colors.success} />
+            <Feather name="gift" size={18} color={Colors.success} />
             <Text style={styles.commissionText}>
               Cette recommandation rapportera{' '}
               <Text style={styles.commissionAmount}>
@@ -405,7 +405,7 @@ export default function PhotoRecoScreen({
             <ActivityIndicator color={Colors.surface} />
           ) : (
             <>
-              <Ionicons name="checkmark-circle" size={20} color={Colors.surface} />
+              <Feather name="check-circle" size={18} color={Colors.surface} />
               <Text style={styles.submitButtonText}>Valider ma recommandation</Text>
             </>
           )}

@@ -13,7 +13,7 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import {
   CategorieEntreprise,
@@ -260,7 +260,7 @@ export default function HomeScreen({ navigation }: any) {
                   )
                 }
               >
-                <Ionicons name="warning" size={20} color={Colors.surface} />
+                <Feather name="alert-triangle" size={18} color={Colors.surface} />
               </TouchableOpacity>
             )}
 
@@ -279,7 +279,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Barre de recherche */}
         <View style={styles.searchContainer}>
-          <Ionicons
+          <Feather
             name="search"
             size={20}
             color={Colors.textSecondary}
@@ -540,7 +540,8 @@ const styles = StyleSheet.create({
   },
   entreprisesScrollContainer: {
     paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.sm,
+    paddingBottom: Spacing.lg,
+    paddingTop: Spacing.xs,
   },
   emptyText: {
     textAlign: 'center',

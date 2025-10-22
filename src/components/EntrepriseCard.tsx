@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { Entreprise } from '../types/database.types';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
 import { supabase } from '../config/supabase';
@@ -95,7 +95,7 @@ export default function EntrepriseCard({
 
           {/* Ville + Distance */}
           <View style={styles.locationRow}>
-            <Ionicons name="location-outline" size={14} color={Colors.textSecondary} />
+            <Feather name="map-pin" size={12} color={Colors.textSecondary} />
             <Text style={styles.ville}>
               {entreprise.ville}
               {distance && ` • ${distance.toFixed(1)} km`}
@@ -113,18 +113,19 @@ export default function EntrepriseCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.surface,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
     borderRadius: BorderRadius.xl,
-    overflow: 'hidden',
   },
   content: {
     flexDirection: 'row',
     minHeight: 120,
+    borderRadius: BorderRadius.xl,
+    overflow: 'hidden',
   },
   logo: {
     width: 110,

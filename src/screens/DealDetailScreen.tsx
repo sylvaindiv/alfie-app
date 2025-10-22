@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   SafeAreaView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Colors, Spacing, Typography, CommonStyles, BorderRadius, Shadows } from '../theme';
 
@@ -71,10 +71,10 @@ interface Commentaire {
 
 // Couleurs des badges selon statut
 const STATUS_CONFIG = {
-  en_attente: { bg: '#FF9800', text: 'En attente', icon: 'time-outline' as const },
-  en_cours: { bg: '#2196F3', text: 'En cours', icon: 'hourglass-outline' as const },
-  valide: { bg: '#4CAF50', text: 'Validé', icon: 'checkmark-circle-outline' as const },
-  refuse: { bg: '#F44336', text: 'Refusé', icon: 'close-circle-outline' as const },
+  en_attente: { bg: '#FF9800', text: 'En attente', icon: 'clock' as const },
+  en_cours: { bg: '#2196F3', text: 'En cours', icon: 'watch' as const },
+  valide: { bg: '#4CAF50', text: 'Validé', icon: 'check-circle' as const },
+  refuse: { bg: '#F44336', text: 'Refusé', icon: 'x-circle' as const },
 };
 
 export default function DealDetailScreen({
@@ -229,7 +229,7 @@ export default function DealDetailScreen({
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color={Colors.textPrimary} />
+          <Feather name="arrow-left" size={22} color={Colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Détail recommandation</Text>
         <View style={{ width: 24 }} />
@@ -249,7 +249,7 @@ export default function DealDetailScreen({
               {deal.entreprise.nom_commercial}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-              <Ionicons name={statusConfig.icon} size={16} color="#FFFFFF" />
+              <Feather name={statusConfig.icon} size={16} color="#FFFFFF" />
               <Text style={styles.statusText}>{statusConfig.text}</Text>
             </View>
           </View>
@@ -293,14 +293,14 @@ export default function DealDetailScreen({
 
             {deal.telephone_prospect && (
               <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
-                <Ionicons name="call-outline" size={20} color={Colors.primary} />
+                <Feather name="phone" size={18} color={Colors.primary} />
                 <Text style={styles.contactText}>{deal.telephone_prospect}</Text>
               </TouchableOpacity>
             )}
 
             {deal.email_prospect && (
               <TouchableOpacity style={styles.contactRow} onPress={handleEmail}>
-                <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+                <Feather name="mail" size={18} color={Colors.primary} />
                 <Text style={styles.contactText}>{deal.email_prospect}</Text>
               </TouchableOpacity>
             )}

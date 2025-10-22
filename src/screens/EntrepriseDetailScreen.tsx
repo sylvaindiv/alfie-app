@@ -12,8 +12,9 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Modal,
+  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { supabase } from '../config/supabase';
 import { Entreprise } from '../types/database.types';
@@ -331,16 +332,17 @@ export default function EntrepriseDetailScreen({
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+          <Feather name="arrow-left" size={22} color={Colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.favoriteButton}
           onPress={() => setIsFavorite(!isFavorite)}
         >
-          <Ionicons
-            name={isFavorite ? 'heart' : 'heart-outline'}
+          <Feather
+            name="heart"
             size={24}
-            color={isFavorite ? Colors.error : Colors.surface}
+            color={isFavorite ? Colors.error : Colors.primary}
+            fill={isFavorite ? Colors.error : 'none'}
           />
         </TouchableOpacity>
       </SafeAreaView>
@@ -454,65 +456,107 @@ export default function EntrepriseDetailScreen({
             </Text>
 
             {/* Carte OpenStreetMap */}
-            <View style={styles.mapContainer}>
-              <WebView
-                style={styles.mapWebView}
-                source={{
-                  html: `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-                      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-                      <style>
-                        body { margin: 0; padding: 0; }
-                        #map { width: 100%; height: 100vh; }
-                      </style>
-                    </head>
-                    <body>
-                      <div id="map"></div>
+            {Platform.OS === 'web' ? (
+              <View style={styles.webMapContainer}>
+                <View
+                  style={styles.webMapWrapper}
+                  // @ts-ignore - dangerouslySetInnerHTML est uniquement pour le web
+                  dangerouslySetInnerHTML={{
+                    __html: `
+                      <iframe
+                        width="100%"
+                        height="100%"
+                        frameborder="0"
+                        scrolling="no"
+                        marginheight="0"
+                        marginwidth="0"
+                        style="border-radius: 8px;"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=&layer=mapnik"
+                        title="Carte de localisation"
+                      ></iframe>
                       <script>
+                        // Geocoder l'adresse pour centrer la carte
                         const address = "${entreprise.adresse}, ${entreprise.code_postal} ${entreprise.ville}";
-
-                        // Geocoding avec Nominatim
                         fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address))
                           .then(response => response.json())
                           .then(data => {
                             if (data.length > 0) {
                               const lat = parseFloat(data[0].lat);
                               const lon = parseFloat(data[0].lon);
-
-                              const map = L.map('map').setView([lat, lon], 15);
-
-                              L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                                attribution: '© OpenStreetMap contributors'
-                              }).addTo(map);
-
-                              L.marker([lat, lon]).addTo(map)
-                                .bindPopup('${entreprise.nom_commercial}')
-                                .openPopup();
+                              const bbox = data[0].boundingbox;
+                              const iframe = document.querySelector('iframe');
+                              if (iframe && bbox) {
+                                const bboxStr = bbox[2] + ',' + bbox[0] + ',' + bbox[3] + ',' + bbox[1];
+                                iframe.src = 'https://www.openstreetmap.org/export/embed.html?bbox=' + bboxStr + '&layer=mapnik&marker=' + lat + ',' + lon;
+                              }
                             }
                           });
                       </script>
-                    </body>
-                    </html>
-                  `,
-                }}
-                scrollEnabled={false}
-                showsVerticalScrollIndicator={false}
-                showsHorizontalScrollIndicator={false}
-              />
-              <TouchableOpacity
-                style={styles.mapExpandButton}
-                onPress={() => setMapModalVisible(true)}
-              >
-                <Ionicons name="expand-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
-            </View>
+                    `,
+                  }}
+                />
+              </View>
+            ) : (
+              <View style={styles.mapContainer}>
+                <WebView
+                  style={styles.mapWebView}
+                  source={{
+                    html: `
+                      <!DOCTYPE html>
+                      <html>
+                      <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                        <style>
+                          body { margin: 0; padding: 0; }
+                          #map { width: 100%; height: 100vh; }
+                        </style>
+                      </head>
+                      <body>
+                        <div id="map"></div>
+                        <script>
+                          const address = "${entreprise.adresse}, ${entreprise.code_postal} ${entreprise.ville}";
+
+                          // Geocoding avec Nominatim
+                          fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(address))
+                            .then(response => response.json())
+                            .then(data => {
+                              if (data.length > 0) {
+                                const lat = parseFloat(data[0].lat);
+                                const lon = parseFloat(data[0].lon);
+
+                                const map = L.map('map').setView([lat, lon], 15);
+
+                                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                  attribution: '© OpenStreetMap contributors'
+                                }).addTo(map);
+
+                                L.marker([lat, lon]).addTo(map)
+                                  .bindPopup('${entreprise.nom_commercial}')
+                                  .openPopup();
+                              }
+                            });
+                        </script>
+                      </body>
+                      </html>
+                    `,
+                  }}
+                  scrollEnabled={false}
+                  showsVerticalScrollIndicator={false}
+                  showsHorizontalScrollIndicator={false}
+                />
+                <TouchableOpacity
+                  style={styles.mapExpandButton}
+                  onPress={() => setMapModalVisible(true)}
+                >
+                  <Feather name="maximize-2" size={18} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
+            )}
 
             <TouchableOpacity style={styles.mapButton} onPress={handleMaps}>
-              <Ionicons name="map-outline" size={20} color={Colors.primary} />
+              <Feather name="map" size={18} color={Colors.primary} />
               <Text style={styles.mapButtonText}>Voir sur Maps</Text>
             </TouchableOpacity>
           </View>
@@ -523,7 +567,7 @@ export default function EntrepriseDetailScreen({
 
             {entreprise.telephone && (
               <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
-                <Ionicons name="call-outline" size={20} color={Colors.primary} />
+                <Feather name="phone" size={18} color={Colors.primary} />
                 <Text style={styles.contactText}>{entreprise.telephone}</Text>
               </TouchableOpacity>
             )}
@@ -533,7 +577,7 @@ export default function EntrepriseDetailScreen({
                 style={styles.contactRow}
                 onPress={handleEmail}
               >
-                <Ionicons name="mail-outline" size={20} color={Colors.primary} />
+                <Feather name="mail" size={18} color={Colors.primary} />
                 <Text style={styles.contactText}>{entreprise.email}</Text>
               </TouchableOpacity>
             )}
@@ -543,7 +587,7 @@ export default function EntrepriseDetailScreen({
                 style={styles.contactRow}
                 onPress={handleWebsite}
               >
-                <Ionicons name="globe-outline" size={20} color={Colors.primary} />
+                <Feather name="globe" size={18} color={Colors.primary} />
                 <Text style={styles.contactText}>{entreprise.site_web}</Text>
               </TouchableOpacity>
             )}
@@ -574,7 +618,7 @@ export default function EntrepriseDetailScreen({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Localisation</Text>
             <TouchableOpacity onPress={() => setMapModalVisible(false)}>
-              <Ionicons name="close" size={28} color={Colors.textPrimary} />
+              <Feather name="x" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
           <WebView
@@ -651,7 +695,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     position: 'absolute',
-    top: 0,
+    top: 20,
     left: Spacing.lg,
     right: Spacing.lg,
     zIndex: 10,
@@ -663,7 +707,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -705,7 +751,9 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: Colors.surface,
+    borderWidth: 1,
+    borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -719,16 +767,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 3,
     borderColor: Colors.surface,
-    zIndex: 10,
+    zIndex: 20,
   },
   content: {
     paddingTop: 0,
   },
   mainInfo: {
-    backgroundColor: Colors.surface,
     padding: Spacing.xl,
-    paddingTop: Spacing.xxxl + Spacing.md,
+    paddingTop: Spacing.xl,
     marginBottom: Spacing.md,
+    zIndex: 1,
   },
   nom: {
     fontSize: Typography.size.xxxl,
@@ -749,9 +797,8 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   section: {
-    backgroundColor: Colors.surface,
     padding: Spacing.xl,
-    marginBottom: Spacing.md,
+    //marginBottom: Spacing.md,
   },
   sectionTitle: {
     fontSize: Typography.size.xl,
@@ -803,6 +850,18 @@ const styles = StyleSheet.create({
   },
   mapWebView: {
     flex: 1,
+  },
+  webMapContainer: {
+    width: '100%',
+    height: 200,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    marginTop: Spacing.md,
+    marginBottom: Spacing.md,
+  },
+  webMapWrapper: {
+    width: '100%',
+    height: '100%',
   },
   mapExpandButton: {
     position: 'absolute',
