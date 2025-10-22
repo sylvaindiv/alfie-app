@@ -13,6 +13,7 @@ import {
   FlatList,
   RefreshControl,
 } from 'react-native';
+import type { ImageStyle } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import {
@@ -23,6 +24,7 @@ import {
   Association,
 } from '../types/database.types';
 import EntrepriseCardHorizontal from '../components/EntrepriseCardHorizontal';
+import LocationButton, { LocationData } from '../components/LocationButton';
 import {
   Colors,
   Spacing,
@@ -53,6 +55,7 @@ export default function HomeScreen({ navigation }: any) {
   const [entreprisesBySubCategoryMap, setEntreprisesBySubCategoryMap] = useState<
     Map<string, Set<string>>
   >(new Map());
+  const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(null);
 
   useEffect(() => {
     fetchAllData();
@@ -239,16 +242,30 @@ export default function HomeScreen({ navigation }: any) {
             {/* Logos associations ou bouton d'alerte */}
             {userAssociations.length > 0 ? (
               <View style={styles.associationLogos}>
-                {userAssociations.slice(0, 3).map((association, index) => (
-                  <Image
-                    key={association.id}
-                    source={{ uri: association.logo_url || 'https://via.placeholder.com/100' }}
-                    style={[
-                      styles.associationLogo,
-                      index > 0 && { marginLeft: -8 },
-                    ]}
-                  />
-                ))}
+                {[...userAssociations].reverse().map((association, index) => {
+                  // Calcul de la taille : chaque logo suivant (vers la gauche) est réduit de 50%
+                  const reversedIndex = userAssociations.length - 1 - index;
+                  const baseSize = 38;
+                  const size = baseSize * Math.pow(0.5, reversedIndex);
+                  const borderRadius = size / 2;
+                  const marginRight = index > 0 ? -(size * 0.3) : 0;
+
+                  const dynamicStyle: ImageStyle = {
+                    width: size,
+                    height: size,
+                    borderRadius: borderRadius,
+                    marginRight: marginRight,
+                    zIndex: index + 1,
+                  };
+
+                  return (
+                    <Image
+                      key={association.id}
+                      source={{ uri: association.logo_url || 'https://via.placeholder.com/100' }}
+                      style={[styles.associationLogo, dynamicStyle]}
+                    />
+                  );
+                })}
               </View>
             ) : (
               <TouchableOpacity
@@ -292,6 +309,11 @@ export default function HomeScreen({ navigation }: any) {
             onChangeText={setSearchQuery}
             placeholderTextColor={Colors.textDisabled}
           />
+        </View>
+
+        {/* Bouton de localisation */}
+        <View style={styles.locationButtonContainer}>
+          <LocationButton onLocationSelected={setSelectedLocation} />
         </View>
 
         {/* Sections par catégorie */}
@@ -413,7 +435,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingBottom: Spacing.xxxl,
   },
   headerLeft: {
     flex: 1,
@@ -437,15 +459,14 @@ const styles = StyleSheet.create({
   },
   associationLogos: {
     flexDirection: 'row',
-    marginRight: Spacing.sm,
+    alignItems: 'center',
+    marginRight: Spacing.xs,
   },
   associationLogo: {
-    width: 38,
-    height: 38,
-    borderRadius: 21.5,
-    borderWidth: 2,
-    borderColor: Colors.background,
-  },
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  } as ImageStyle,
   noAssociationButton: {
     width: 38,
     height: 38,
@@ -461,8 +482,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 2,
-    borderColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    zIndex: 9999,
   },
   question: {
     fontSize: Typography.size.huge,
@@ -479,7 +501,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.surface,
     marginHorizontal: Spacing.xl,
-    marginBottom: Spacing.xxxl,
+    marginBottom: Spacing.lg,
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
     height: 52,
@@ -493,6 +515,10 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.base,
     fontFamily: Typography.fontFamily.body,
     color: Colors.textPrimary,
+  },
+  locationButtonContainer: {
+    paddingHorizontal: Spacing.xl,
+    marginBottom: Spacing.xxxl,
   },
   categorySection: {
     marginBottom: Spacing.xxxl,

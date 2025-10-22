@@ -14,7 +14,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.anonymous.alfieapp"
+      "bundleIdentifier": "com.anonymous.alfieapp",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Nous avons besoin de votre position pour afficher les entreprises près de vous."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,13 +26,23 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.alfieapp"
+      "package": "com.anonymous.alfieapp",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Nous avons besoin de votre position pour afficher les entreprises près de vous."
+        }
+      ]
     ]
   }
 }

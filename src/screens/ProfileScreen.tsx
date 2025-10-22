@@ -232,21 +232,29 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         {/* Liste des associations */}
         {associations.map((ambassadeur) => (
           <View key={ambassadeur.id} style={styles.assoCard}>
-            {/* Logo + Nom */}
+            {/* Logo + Nom + Adresse */}
             <View style={styles.assoContent}>
               {ambassadeur.association.logo_url ? (
                 <Image
                   source={{ uri: ambassadeur.association.logo_url }}
                   style={styles.assoLogo}
+                  resizeMode="contain"
                 />
               ) : (
                 <View style={styles.assoLogoPlaceholder}>
                   <Feather name="briefcase" size={22} color={Colors.textSecondary} />
                 </View>
               )}
-              <Text style={styles.assoName}>
-                {ambassadeur.association.nom}
-              </Text>
+              <View style={styles.assoTextContainer}>
+                <Text style={styles.assoName}>
+                  {ambassadeur.association.nom}
+                </Text>
+                {ambassadeur.association.adresse && (
+                  <Text style={styles.assoAddress}>
+                    {ambassadeur.association.adresse}
+                  </Text>
+                )}
+              </View>
             </View>
 
             {/* Bouton retirer (si plusieurs associations) */}
@@ -744,12 +752,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
   },
-  assoName: {
+  assoTextContainer: {
     flex: 1,
+  },
+  assoName: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
     fontWeight: Typography.weight.semiBold as any,
     color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  assoAddress: {
+    fontSize: Typography.size.sm,
+    fontFamily: Typography.fontFamily.body,
+    color: Colors.textSecondary,
   },
   removeButton: {
     padding: Spacing.xs,
