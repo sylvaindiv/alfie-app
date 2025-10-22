@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,10 @@ import {
   Alert,
   Switch,
   Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
@@ -35,6 +39,16 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const [emailEnabled, setEmailEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // États pour le formulaire d'édition
+  const [editEmail, setEditEmail] = useState('');
+  const [editAdresseComplete, setEditAdresseComplete] = useState('');
+  const [editCodePostal, setEditCodePostal] = useState('');
+  const [editVille, setEditVille] = useState('');
+
+  // Animation pour l'overlay
+  const overlayOpacity = useRef(new Animated.Value(0)).current;
 
   // Charger les données utilisateur
   useEffect(() => {
@@ -91,6 +105,55 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
     }
   };
 
+  const openEditModal = () => {
+    setEditEmail(user?.email || '');
+    setEditAdresseComplete(user?.adresse_complete || '');
+    setEditCodePostal(user?.code_postal || '');
+    setEditVille(user?.ville || '');
+    setShowEditModal(true);
+    // Animation de fade in pour l'overlay
+    Animated.timing(overlayOpacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeEditModal = () => {
+    // Animation de fade out pour l'overlay
+    Animated.timing(overlayOpacity, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowEditModal(false);
+    });
+  };
+
+  const saveUserInfo = async () => {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({
+          email: editEmail,
+          adresse_complete: editAdresseComplete,
+          code_postal: editCodePostal,
+          ville: editVille,
+        })
+        .eq('id', USER_ID);
+
+      if (error) throw error;
+
+      // Recharger les données
+      await loadUserData();
+      closeEditModal();
+      Alert.alert('Succès', 'Informations mises à jour');
+    } catch (error) {
+      console.error('Erreur sauvegarde:', error);
+      Alert.alert('Erreur', 'Impossible de sauvegarder les modifications');
+    }
+  };
+
   if (loading || !user) {
     return (
       <View style={styles.loadingContainer}>
@@ -134,52 +197,32 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Informations personnelles</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Informations personnelles</Text>
+          <TouchableOpacity
+            style={styles.editIconButton}
+            onPress={openEditModal}
+          >
+            <Feather name="edit-2" size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         {/* Email */}
-        <View style={styles.infoRow}>
-          <View style={styles.infoContent}>
-            <View style={styles.infoIconLabel}>
-              <Feather name="mail" size={18} color={Colors.textSecondary} />
-              <Text style={styles.infoLabel}>Email</Text>
-            </View>
-            <Text style={styles.infoValue}>
-              {user.email || 'Non renseigné'}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
-          </TouchableOpacity>
+        <View style={styles.compactInfoRow}>
+          <Feather name="mail" size={18} color={Colors.textSecondary} />
+          <Text style={styles.compactInfoText}>
+            {user.email || 'Non renseigné'}
+          </Text>
         </View>
 
-        {/* Code postal */}
-        <View style={styles.infoRow}>
-          <View style={styles.infoContent}>
-            <View style={styles.infoIconLabel}>
-              <Feather name="map-pin" size={18} color={Colors.textSecondary} />
-              <Text style={styles.infoLabel}>Code postal</Text>
-            </View>
-            <Text style={styles.infoValue}>{user.code_postal}</Text>
-          </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Adresse complète */}
-        <View style={styles.infoRow}>
-          <View style={styles.infoContent}>
-            <View style={styles.infoIconLabel}>
-              <Feather name="home" size={18} color={Colors.textSecondary} />
-              <Text style={styles.infoLabel}>Adresse complète</Text>
-            </View>
-            <Text style={styles.infoValue}>
-              {user.adresse_complete || 'Non renseignée'}
-            </Text>
-          </View>
-          <TouchableOpacity style={styles.editButton}>
-            <Feather name="edit-2" size={18} color={Colors.primary} onPress={() => Alert.alert('Info', 'Fonctionnalité à venir')} />
-          </TouchableOpacity>
+        {/* Adresse */}
+        <View style={styles.compactInfoRow}>
+          <Feather name="map-pin" size={18} color={Colors.textSecondary} />
+          <Text style={styles.compactInfoText}>
+            {user.adresse_complete && user.code_postal && user.ville
+              ? `${user.adresse_complete}, ${user.code_postal} ${user.ville}`
+              : 'Adresse non renseignée'}
+          </Text>
         </View>
       </View>
       {/* SECTION : Mes associations */}
@@ -412,11 +455,125 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
               onPress={() => setShowAdminModal(false)}
               style={styles.closeButton}
             >
-              <Feather name="x" size={22} color={Colors.text} />
+              <Feather name="x" size={22} color={Colors.textPrimary} />
             </TouchableOpacity>
           </View>
           <AdminScreen />
         </View>
+      </Modal>
+
+      {/* Modal Édition Informations */}
+      <Modal
+        visible={showEditModal}
+        animationType="none"
+        transparent={true}
+        onRequestClose={closeEditModal}
+      >
+        <Animated.View
+          style={[
+            styles.modalOverlay,
+            { opacity: overlayOpacity }
+          ]}
+        >
+          <TouchableOpacity
+            style={styles.overlayTouchable}
+            activeOpacity={1}
+            onPress={closeEditModal}
+          />
+        </Animated.View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalContentContainer}
+        >
+          <Animated.View
+            style={[
+              styles.modalContent,
+              {
+                transform: [{
+                  translateY: overlayOpacity.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [600, 0],
+                  })
+                }]
+              }
+            ]}
+          >
+            <View style={styles.modalHeaderEdit}>
+              <Text style={styles.modalTitle}>Modifier mes informations</Text>
+              <TouchableOpacity
+                onPress={closeEditModal}
+                style={styles.closeButtonEdit}
+              >
+                <Feather name="x" size={24} color={Colors.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalForm}>
+              {/* Email */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Email</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  placeholder="votre.email@exemple.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              {/* Adresse complète */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Adresse postale</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editAdresseComplete}
+                  onChangeText={setEditAdresseComplete}
+                  placeholder="123 rue de la Paix"
+                />
+              </View>
+
+              {/* Code postal */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Code postal</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editCodePostal}
+                  onChangeText={setEditCodePostal}
+                  placeholder="75000"
+                  keyboardType="numeric"
+                  maxLength={5}
+                />
+              </View>
+
+              {/* Ville */}
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Ville</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editVille}
+                  onChangeText={setEditVille}
+                  placeholder="Paris"
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={closeEditModal}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={saveUserInfo}
+              >
+                <Text style={styles.saveButtonText}>Enregistrer</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        </KeyboardAvoidingView>
       </Modal>
     </ScrollView>
   );
@@ -487,7 +644,7 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: Typography.size.xxxl,
-    fontWeight: Typography.weight.bold,
+    fontWeight: Typography.weight.bold as any,
     fontFamily: Typography.fontFamily.heading,
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
@@ -521,44 +678,35 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: Typography.size.xxl,
-    fontWeight: Typography.weight.bold,
+    fontWeight: Typography.weight.bold as any,
     fontFamily: Typography.fontFamily.heading,
     color: Colors.textPrimary,
     marginBottom: Spacing.lg,
   },
-
-  // === INFO ROW ===
-  infoRow: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  editIconButton: {
+    padding: Spacing.sm,
+  },
+
+  // === COMPACT INFO ROW ===
+  compactInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
-  infoContent: {
+  compactInfoText: {
     flex: 1,
-  },
-  infoIconLabel: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
-  infoLabel: {
-    fontSize: Typography.size.sm,
-    fontFamily: Typography.fontFamily.body,
-    color: Colors.textSecondary,
-  },
-  infoValue: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
     color: Colors.textPrimary,
-  },
-  editButton: {
-    padding: Spacing.sm,
-    marginLeft: Spacing.md,
   },
   // === ASSOCIATIONS ===
   assoCard: {
@@ -600,7 +748,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.textPrimary,
   },
   removeButton: {
@@ -633,7 +781,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.primary,
     marginLeft: Spacing.sm,
   },
@@ -662,7 +810,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: Typography.size.xxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: Typography.weight.bold as any,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
@@ -695,7 +843,7 @@ const styles = StyleSheet.create({
   notifLabel: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
@@ -743,7 +891,7 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: Typography.size.lg,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.error,
   },
   // === ADMIN ===
@@ -758,7 +906,7 @@ const styles = StyleSheet.create({
   adminText: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: Typography.weight.semiBold as any,
     color: Colors.primary,
   },
   // === MODAL ===
@@ -776,5 +924,106 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     alignSelf: 'flex-start',
+  },
+
+  // === MODAL EDIT ===
+  modalOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  overlayTouchable: {
+    flex: 1,
+  },
+  modalContentContainer: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    pointerEvents: 'box-none',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+    maxHeight: '80%',
+  },
+  modalHeaderEdit: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  modalTitle: {
+    fontSize: Typography.size.xl,
+    fontWeight: Typography.weight.bold as any,
+    fontFamily: Typography.fontFamily.heading,
+    color: Colors.textPrimary,
+  },
+  closeButtonEdit: {
+    padding: Spacing.xs,
+  },
+  modalForm: {
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+  },
+  formGroup: {
+    marginBottom: Spacing.lg,
+  },
+  formLabel: {
+    fontSize: Typography.size.sm,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: Typography.weight.semiBold as any,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.xs,
+  },
+  formInput: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    color: Colors.textPrimary,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.background,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: Typography.weight.semiBold as any,
+    color: Colors.textSecondary,
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: Typography.weight.semiBold as any,
+    color: Colors.textOnPrimary,
   },
 });

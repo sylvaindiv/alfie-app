@@ -9,6 +9,7 @@ export interface User {
   photo_profil_url: string | null;
   code_postal: string;
   adresse_complete: string | null;
+  ville: string | null;
   role: 'ambassadeur' | 'gerant_asso' | 'gerant_entreprise' | 'admin';
   statut_onboarding: 'incomplet' | 'complet';
   is_admin: boolean;
