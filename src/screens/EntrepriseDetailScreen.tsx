@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
   SafeAreaView,
   Modal,
   Platform,
+  Animated,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
@@ -50,6 +51,22 @@ export default function EntrepriseDetailScreen({
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const [mapModalVisible, setMapModalVisible] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
+
+  // Refs pour la navigation sticky
+  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
+  const [activeSection, setActiveSection] = useState('photos');
+
+  // Stocker les positions Y de chaque section
+  const sectionPositions = useRef<{ [key: string]: number }>({});
+
+  // Refs pour chaque section
+  const photosRef = useRef<View>(null);
+  const descriptionRef = useRef<View>(null);
+  const horairesRef = useRef<View>(null);
+  const adresseRef = useRef<View>(null);
+  const contactRef = useRef<View>(null);
 
   useEffect(() => {
     fetchEntrepriseDetails();
@@ -207,6 +224,63 @@ export default function EntrepriseDetailScreen({
     }
   }
 
+  // Détection dynamique des sections disponibles
+  const availableSections = useMemo(() => {
+    if (!entreprise) return [];
+
+    const sections = [
+      { id: 'photos', label: 'Photos', show: true },
+      { id: 'description', label: 'À propos', show: !!entreprise.description },
+      { id: 'horaires', label: 'Horaires', show: !!entreprise.horaires },
+      { id: 'adresse', label: 'Adresse', show: true },
+      {
+        id: 'contact',
+        label: 'Contact',
+        show: !!(entreprise.telephone || entreprise.email || entreprise.site_web),
+      },
+    ];
+
+    return sections.filter((section) => section.show);
+  }, [entreprise]);
+
+  // Callback pour enregistrer la position d'une section
+  const handleSectionLayout = (sectionId: string, event: any) => {
+    const { y } = event.nativeEvent.layout;
+    sectionPositions.current[sectionId] = y;
+  };
+
+  // Fonction pour scroller vers une section
+  const scrollToSection = (sectionId: string) => {
+    const yPosition = sectionPositions.current[sectionId];
+
+    if (yPosition !== undefined && scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        y: yPosition - 110, // Compensation pour le header sticky (hauteur ~110px)
+        animated: true,
+      });
+      setActiveSection(sectionId);
+    } else {
+      console.log('Position non disponible pour la section:', sectionId);
+    }
+  };
+
+  // Gérer le scroll pour détecter la section active et afficher/masquer le header
+  const handleScroll = Animated.event(
+    [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+    {
+      useNativeDriver: false,
+      listener: (event: any) => {
+        const offsetY = event.nativeEvent.contentOffset.y;
+
+        // Afficher le header sticky après avoir scrollé 150px (plus tôt)
+        setShowStickyHeader(offsetY > 150);
+
+        // TODO: Détecter la section active basée sur la position de scroll
+        // Pour l'instant, on garde la section active telle quelle
+      },
+    }
+  );
+
   // Parser les horaires pour un affichage propre
   function parseHoraires(horairesString: string): { jour: string; horaires: string }[] {
     if (!horairesString) return [];
@@ -324,6 +398,50 @@ export default function EntrepriseDetailScreen({
       ? photos.map((p) => getPublicImageUrl(p.photo_url))
       : ['https://via.placeholder.com/400x250?text=Pas+de+photo'];
 
+  // Animation du header sticky avec fondu plus doux
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [100, 180],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [85, 180],
+    outputRange: [-30, 0],
+    extrapolate: 'clamp',
+  });
+
+  // Composant des tabs scrollables
+  const renderTabs = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.tabsContainer}
+      contentContainerStyle={styles.tabsContent}
+    >
+      {availableSections.map((section) => (
+        <TouchableOpacity
+          key={section.id}
+          style={[
+            styles.tab,
+            activeSection === section.id && styles.tabActive,
+          ]}
+          onPress={() => scrollToSection(section.id)}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              activeSection === section.id && styles.tabTextActive,
+            ]}
+          >
+            {section.label}
+          </Text>
+          {activeSection === section.id && <View style={styles.tabIndicator} />}
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  );
+
   return (
     <View style={styles.container}>
       {/* Header fixe avec boutons retour et favori */}
@@ -332,7 +450,7 @@ export default function EntrepriseDetailScreen({
           onPress={() => navigation.goBack()}
           style={styles.backButton}
         >
-          <Feather name="arrow-left" size={22} color={Colors.primary} />
+          <Feather name="arrow-left" size={24} color={Colors.primary} />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.favoriteButton}
@@ -347,9 +465,57 @@ export default function EntrepriseDetailScreen({
         </TouchableOpacity>
       </SafeAreaView>
 
-      <ScrollView style={styles.scrollView}>
+      {/* Header sticky avec tabs */}
+      {showStickyHeader && (
+        <Animated.View
+          style={[
+            styles.stickyHeader,
+            {
+              opacity: headerOpacity,
+              transform: [{ translateY: headerTranslateY }],
+            },
+          ]}
+        >
+          <SafeAreaView>
+            <View style={styles.stickyHeaderContent}>
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={styles.stickyBackButton}
+              >
+                <Feather name="arrow-left" size={24} color={Colors.primary} />
+              </TouchableOpacity>
+              <Text style={styles.stickyHeaderTitle} numberOfLines={1}>
+                {entreprise.nom_commercial}
+              </Text>
+              <TouchableOpacity
+                style={styles.stickyFavoriteButton}
+                onPress={() => setIsFavorite(!isFavorite)}
+              >
+                <Feather
+                  name="heart"
+                  size={24}
+                  color={isFavorite ? Colors.error : Colors.primary}
+                  fill={isFavorite ? Colors.error : 'none'}
+                />
+              </TouchableOpacity>
+            </View>
+            {renderTabs()}
+          </SafeAreaView>
+        </Animated.View>
+      )}
+
+      <ScrollView
+        ref={scrollViewRef}
+        style={styles.scrollView}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {/* Galerie photos */}
-        <View style={styles.galleryContainer}>
+        <View
+          ref={photosRef}
+          style={styles.galleryContainer}
+          onLayout={(event) => handleSectionLayout('photos', event)}
+        >
           <ScrollView
             horizontal
             pagingEnabled
@@ -422,32 +588,48 @@ export default function EntrepriseDetailScreen({
           </View>
 
           {/* Description */}
-          {entreprise.description && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>📝 Description</Text>
-              <Text style={styles.descriptionText}>
-                {entreprise.description}
-              </Text>
-            </View>
-          )}
+          <View
+            ref={descriptionRef}
+            style={entreprise.description ? styles.section : styles.hiddenSection}
+            onLayout={(event) => handleSectionLayout('description', event)}
+          >
+            {entreprise.description && (
+              <>
+                <Text style={styles.sectionTitle}>📝 Description</Text>
+                <Text style={styles.descriptionText}>
+                  {entreprise.description}
+                </Text>
+              </>
+            )}
+          </View>
 
           {/* Horaires */}
-          {entreprise.horaires && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🕐 Horaires</Text>
-              {parseHoraires(entreprise.horaires).map((item, index) => (
-                <View key={index} style={styles.horaireRow}>
-                  {item.jour && (
-                    <Text style={styles.horaireJour}>{item.jour}</Text>
-                  )}
-                  <Text style={styles.horaireText}>{item.horaires}</Text>
-                </View>
-              ))}
-            </View>
-          )}
+          <View
+            ref={horairesRef}
+            style={entreprise.horaires ? styles.section : styles.hiddenSection}
+            onLayout={(event) => handleSectionLayout('horaires', event)}
+          >
+            {entreprise.horaires && (
+              <>
+                <Text style={styles.sectionTitle}>🕐 Horaires</Text>
+                {parseHoraires(entreprise.horaires).map((item, index) => (
+                  <View key={index} style={styles.horaireRow}>
+                    {item.jour && (
+                      <Text style={styles.horaireJour}>{item.jour}</Text>
+                    )}
+                    <Text style={styles.horaireText}>{item.horaires}</Text>
+                  </View>
+                ))}
+              </>
+            )}
+          </View>
 
           {/* Adresse */}
-          <View style={styles.section}>
+          <View
+            ref={adresseRef}
+            style={styles.section}
+            onLayout={(event) => handleSectionLayout('adresse', event)}
+          >
             <Text style={styles.sectionTitle}>📍 Adresse</Text>
             <Text style={styles.infoText}>
               {entreprise.adresse}
@@ -562,34 +744,42 @@ export default function EntrepriseDetailScreen({
           </View>
 
           {/* Contact */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>📞 Contact</Text>
+          <View
+            ref={contactRef}
+            style={(entreprise.telephone || entreprise.email || entreprise.site_web) ? styles.section : styles.hiddenSection}
+            onLayout={(event) => handleSectionLayout('contact', event)}
+          >
+            {(entreprise.telephone || entreprise.email || entreprise.site_web) && (
+              <>
+                <Text style={styles.sectionTitle}>📞 Contact</Text>
 
-            {entreprise.telephone && (
-              <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
-                <Feather name="phone" size={18} color={Colors.primary} />
-                <Text style={styles.contactText}>{entreprise.telephone}</Text>
-              </TouchableOpacity>
-            )}
+                {entreprise.telephone && (
+                  <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
+                    <Feather name="phone" size={18} color={Colors.primary} />
+                    <Text style={styles.contactText}>{entreprise.telephone}</Text>
+                  </TouchableOpacity>
+                )}
 
-            {entreprise.email && (
-              <TouchableOpacity
-                style={styles.contactRow}
-                onPress={handleEmail}
-              >
-                <Feather name="mail" size={18} color={Colors.primary} />
-                <Text style={styles.contactText}>{entreprise.email}</Text>
-              </TouchableOpacity>
-            )}
+                {entreprise.email && (
+                  <TouchableOpacity
+                    style={styles.contactRow}
+                    onPress={handleEmail}
+                  >
+                    <Feather name="mail" size={18} color={Colors.primary} />
+                    <Text style={styles.contactText}>{entreprise.email}</Text>
+                  </TouchableOpacity>
+                )}
 
-            {entreprise.site_web && (
-              <TouchableOpacity
-                style={styles.contactRow}
-                onPress={handleWebsite}
-              >
-                <Feather name="globe" size={18} color={Colors.primary} />
-                <Text style={styles.contactText}>{entreprise.site_web}</Text>
-              </TouchableOpacity>
+                {entreprise.site_web && (
+                  <TouchableOpacity
+                    style={styles.contactRow}
+                    onPress={handleWebsite}
+                  >
+                    <Feather name="globe" size={18} color={Colors.primary} />
+                    <Text style={styles.contactText}>{entreprise.site_web}</Text>
+                  </TouchableOpacity>
+                )}
+              </>
             )}
           </View>
 
@@ -781,7 +971,7 @@ const styles = StyleSheet.create({
   nom: {
     fontSize: Typography.size.xxxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   retributionTitle: {
@@ -793,17 +983,21 @@ const styles = StyleSheet.create({
   retributionAmount: {
     fontSize: Typography.size.xxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.primary,
   },
   section: {
     padding: Spacing.xl,
     //marginBottom: Spacing.md,
   },
+  hiddenSection: {
+    height: 0,
+    overflow: 'hidden',
+  },
   sectionTitle: {
     fontSize: Typography.size.xl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
     marginBottom: Spacing.sm,
   },
@@ -827,7 +1021,7 @@ const styles = StyleSheet.create({
   horaireJour: {
     fontSize: Typography.size.md,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: '600',
     color: Colors.textPrimary,
     width: 100,
     marginRight: Spacing.md,
@@ -884,7 +1078,7 @@ const styles = StyleSheet.create({
     fontSize: Typography.size.lg,
     fontFamily: Typography.fontFamily.body,
     color: Colors.primary,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: '600',
     marginLeft: Spacing.sm,
   },
   contactRow: {
@@ -912,7 +1106,7 @@ const styles = StyleSheet.create({
     color: Colors.textOnPrimary,
     fontSize: Typography.size.lg,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
   },
   modalContainer: {
     flex: 1,
@@ -930,10 +1124,90 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: Typography.size.xxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   modalMap: {
     flex: 1,
+  },
+  // Styles pour le header sticky
+  stickyHeader: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 100,
+    backgroundColor: Colors.surface,
+    ...getShadow('small'),
+  },
+  stickyHeaderContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    height: 56,
+  },
+  stickyBackButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stickyFavoriteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stickyHeaderTitle: {
+    flex: 1,
+    fontSize: Typography.size.xl,
+    fontFamily: Typography.fontFamily.heading,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+    textAlign: 'left',
+    marginLeft: Spacing.sm,
+    marginRight: Spacing.md,
+  },
+  // Styles pour les tabs
+  tabsContainer: {
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  tabsContent: {
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.sm,
+    paddingTop: Spacing.xs,
+  },
+  tab: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    marginRight: Spacing.sm,
+    position: 'relative',
+  },
+  tabActive: {
+    // Le style actif est géré par l'indicateur
+  },
+  tabText: {
+    fontSize: Typography.size.md,
+    fontFamily: Typography.fontFamily.body,
+    fontWeight: '500',
+    color: Colors.textSecondary,
+  },
+  tabTextActive: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+  tabIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: Spacing.lg,
+    right: Spacing.lg,
+    height: 2,
+    backgroundColor: Colors.primary,
+    borderRadius: 1,
   },
 });
