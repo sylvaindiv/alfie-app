@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../config/supabase';
 import { Association, Entreprise } from '../types/database.types';
-import { Colors, Spacing, Typography, BorderRadius, CommonStyles, Shadows } from '../theme';
+import { Colors, Spacing, Typography, BorderRadius, CommonStyles, getShadow } from '../theme';
 
 interface PhotoRecoScreenProps {
   route: {
@@ -189,11 +189,11 @@ export default function PhotoRecoScreen({
         throw new Error('Échec de l\'upload de la photo');
       }
 
-      // Créer le lead
-      const { data: leadData, error: leadError } = await supabase
-        .from('leads')
+      // Créer le deal
+      const { data: dealData, error: dealError } = await supabase
+        .from('deals')
         .insert({
-          type_lead: 'auto_recommandation',
+          type_deal: 'auto_recommandation',
           ambassadeur_id: USER_ID,
           association_id: selectedAssociationId,
           entreprise_id: entrepriseId,
@@ -203,13 +203,13 @@ export default function PhotoRecoScreen({
         .select()
         .single();
 
-      if (leadError) throw leadError;
+      if (dealError) throw dealError;
 
-      // Créer la preuve photo associée au lead
+      // Créer la preuve photo associée au deal
       const { error: preuveError } = await supabase
         .from('preuves_photos')
         .insert({
-          lead_id: leadData.id,
+          deal_id: dealData.id,
           photo_url: photoUrl,
           statut: 'en_attente',
         });
@@ -218,10 +218,10 @@ export default function PhotoRecoScreen({
         console.warn('Erreur création preuve photo:', preuveError);
       }
 
-      // Incrémenter le compteur nb_leads_crees de l'ambassadeur
+      // Incrémenter le compteur nb_deals_crees de l'ambassadeur
       const { data: ambassadeurData } = await supabase
         .from('ambassadeurs')
-        .select('nb_leads_crees')
+        .select('nb_deals_crees')
         .eq('user_id', USER_ID)
         .eq('association_id', selectedAssociationId)
         .single();
@@ -230,16 +230,16 @@ export default function PhotoRecoScreen({
         await supabase
           .from('ambassadeurs')
           .update({
-            nb_leads_crees: (ambassadeurData.nb_leads_crees || 0) + 1,
+            nb_deals_crees: (ambassadeurData.nb_deals_crees || 0) + 1,
           })
           .eq('user_id', USER_ID)
           .eq('association_id', selectedAssociationId);
       }
 
-      // Incrémenter le compteur nb_leads_recus de l'entreprise
+      // Incrémenter le compteur nb_deals_recus de l'entreprise
       const { data: entrepriseData } = await supabase
         .from('entreprises')
-        .select('nb_leads_recus')
+        .select('nb_deals_recus')
         .eq('id', entrepriseId)
         .single();
 
@@ -247,7 +247,7 @@ export default function PhotoRecoScreen({
         await supabase
           .from('entreprises')
           .update({
-            nb_leads_recus: (entrepriseData.nb_leads_recus || 0) + 1,
+            nb_deals_recus: (entrepriseData.nb_deals_recus || 0) + 1,
           })
           .eq('id', entrepriseId);
       }
@@ -262,14 +262,14 @@ export default function PhotoRecoScreen({
               // Utiliser reset pour empêcher le retour en arrière
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'Leads' }],
+                routes: [{ name: 'Deals' }],
               });
             },
           },
         ]
       );
     } catch (error) {
-      console.error('Erreur création lead:', error);
+      console.error('Erreur création deal:', error);
       Alert.alert('Erreur', 'Impossible de créer l\'auto-recommandation');
     } finally {
       setSubmitting(false);
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
-    ...Shadows.small,
+    ...getShadow('small'),
   },
   photoButtonText: {
     fontSize: Typography.size.base,
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
-    ...Shadows.medium,
+    ...getShadow('medium'),
     minHeight: 52,
   },
   submitButtonDisabled: {

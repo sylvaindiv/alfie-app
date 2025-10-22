@@ -25,7 +25,6 @@ import {
   BorderRadius,
   CommonStyles,
 } from '../theme';
-import { getEntrepriseLogoUrlSync } from '../utils/entrepriseHelpers';
 
 type TabType = 'categories' | 'entreprises';
 
@@ -52,7 +51,7 @@ export default function AdminScreen() {
   const [entreprises, setEntreprises] = useState<Entreprise[]>([]);
   const [selectedEntreprise, setSelectedEntreprise] =
     useState<Entreprise | null>(null);
-  const [entreprisePhotos, setEntreprisePhotos] = useState<any[]>([]);
+  const [editablePhotos, setEditablePhotos] = useState<any[]>([]);
   const [entrepriseCategories, setEntrepriseCategories] = useState<
     EntrepriseCategorie[]
   >([]);
@@ -62,11 +61,41 @@ export default function AdminScreen() {
   const [showCategoriesToggle, setShowCategoriesToggle] = useState<
     Record<string, boolean>
   >({});
+  const [entrepriseFirstPhotos, setEntrepriseFirstPhotos] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     loadCategories();
     loadEntreprises();
   }, []);
+
+  // Charger les premières photos des entreprises
+  useEffect(() => {
+    const loadFirstPhotos = async () => {
+      const photosMap: Record<string, string> = {};
+
+      for (const ent of entreprises) {
+        const { data, error } = await supabase
+          .from('entreprises_photos')
+          .select('photo_url')
+          .eq('entreprise_id', ent.id)
+          .order('ordre_affichage', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (!error && data?.photo_url) {
+          photosMap[ent.id] = data.photo_url;
+        }
+      }
+
+      setEntrepriseFirstPhotos(photosMap);
+    };
+
+    if (entreprises.length > 0) {
+      loadFirstPhotos();
+    }
+  }, [entreprises]);
 
   const loadCategories = async () => {
     try {
@@ -142,7 +171,7 @@ export default function AdminScreen() {
         .order('ordre_affichage', { ascending: true});
 
       if (error) throw error;
-      setEntreprisePhotos(data || []);
+      setEditablePhotos(data || []);
     } catch (error) {
       console.error('Erreur chargement photos:', error);
       Alert.alert('Erreur', 'Impossible de charger les photos');
@@ -642,6 +671,93 @@ export default function AdminScreen() {
     }
   };
 
+  const saveEntreprisePhotos = async (entrepriseId: string) => {
+    try {
+      // Sauvegarder toutes les photos modifiées
+      for (const photo of editablePhotos) {
+        // Vérifier si l'URL est vide
+        if (!photo.photo_url || photo.photo_url.trim() === '') {
+          continue; // Ignorer les photos sans URL
+        }
+
+        const { error } = await supabase
+          .from('entreprises_photos')
+          .update({
+            photo_url: photo.photo_url.trim(),
+            ordre_affichage: photo.ordre_affichage,
+          })
+          .eq('id', photo.id);
+
+        if (error) {
+          console.error('Erreur pour photo:', photo.id, error);
+          throw error;
+        }
+      }
+
+      await loadEntreprisePhotos(entrepriseId);
+      Alert.alert('Succès', 'Photos mises à jour');
+    } catch (error: any) {
+      console.error('Erreur sauvegarde photos:', error);
+      Alert.alert(
+        'Erreur',
+        `Impossible de sauvegarder les photos: ${error.message || 'Erreur inconnue'}`
+      );
+    }
+  };
+
+  const deleteEntreprisePhoto = async (photoId: string, entrepriseId: string) => {
+    Alert.alert(
+      'Supprimer la photo',
+      'Êtes-vous sûr de vouloir supprimer cette photo ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { error } = await supabase
+                .from('entreprises_photos')
+                .delete()
+                .eq('id', photoId);
+
+              if (error) throw error;
+              await loadEntreprisePhotos(entrepriseId);
+              Alert.alert('Succès', 'Photo supprimée');
+            } catch (error) {
+              console.error('Erreur suppression photo:', error);
+              Alert.alert('Erreur', 'Impossible de supprimer la photo');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const addEntreprisePhoto = async (entrepriseId: string) => {
+    try {
+      const maxOrdre = Math.max(
+        ...editablePhotos.map((p) => p.ordre_affichage),
+        0
+      );
+
+      const { error } = await supabase
+        .from('entreprises_photos')
+        .insert({
+          entreprise_id: entrepriseId,
+          photo_url: '',
+          ordre_affichage: maxOrdre + 1,
+        });
+
+      if (error) throw error;
+      await loadEntreprisePhotos(entrepriseId);
+      Alert.alert('Succès', 'Photo ajoutée');
+    } catch (error) {
+      console.error('Erreur ajout photo:', error);
+      Alert.alert('Erreur', 'Impossible d\'ajouter la photo');
+    }
+  };
+
   const renderCategoriesTab = () => {
     const filteredSousCategories = selectedCategoryId
       ? sousCategories.filter(
@@ -835,7 +951,7 @@ export default function AdminScreen() {
       <ScrollView style={styles.tabContent}>
         <Text style={styles.sectionTitle}>Entreprises ({entreprises.length})</Text>
         {entreprises.map((ent) => {
-          const logoUrl = getEntrepriseLogoUrlSync(ent);
+          const firstPhotoUrl = entrepriseFirstPhotos[ent.id];
           const isSelected = selectedEntreprise?.id === ent.id;
 
           return (
@@ -845,7 +961,7 @@ export default function AdminScreen() {
                 onPress={() => {
                   if (isSelected) {
                     setSelectedEntreprise(null);
-                    setEntreprisePhotos([]);
+                    setEditablePhotos([]);
                     setEntrepriseCategories([]);
                   } else {
                     setSelectedEntreprise(ent);
@@ -854,9 +970,9 @@ export default function AdminScreen() {
                   }
                 }}
               >
-                {logoUrl && (
+                {firstPhotoUrl && (
                   <Image
-                    source={{ uri: logoUrl }}
+                    source={{ uri: firstPhotoUrl }}
                     style={styles.entrepriseLogo as any}
                   />
                 )}
@@ -974,7 +1090,7 @@ export default function AdminScreen() {
                             <TextInput
                               style={styles.newSousCategoryInput}
                               placeholder="+ Nouvelle sous-catégorie..."
-                              placeholderTextColor={Colors.textLight}
+                              placeholderTextColor={Colors.textSecondary}
                               value={newSousCategorieInputs[cat.id] || ''}
                               onChangeText={(text) =>
                                 setNewSousCategorieInputs({
@@ -1098,40 +1214,101 @@ export default function AdminScreen() {
                     </Text>
                   </TouchableOpacity>
 
-                  <View style={styles.subCategoriesHeader}>
-                    <Text style={styles.subCategoriesTitle}>
-                      Photos ({entreprisePhotos.length})
-                    </Text>
-                  </View>
-                  <ScrollView
-                    horizontal
-                    style={styles.photoGallery}
-                    showsHorizontalScrollIndicator={false}
-                  >
-                    {entreprisePhotos.map((photo, index) => {
-                      let photoUrl = photo.url_photo;
-                      if (photo.storage_path) {
-                        const { data } = supabase.storage
-                          .from('galerie')
-                          .getPublicUrl(photo.storage_path);
-                        photoUrl = data.publicUrl;
-                      }
+                  {/* Galerie photos - Tableau éditable */}
+                  <View style={styles.subCategoriesSection}>
+                    <View style={styles.subCategoriesHeader}>
+                      <Text style={styles.subCategoriesTitle}>
+                        Photos de la galerie ({editablePhotos.length})
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.addButtonSmall}
+                        onPress={() => addEntreprisePhoto(ent.id)}
+                      >
+                        <Text style={styles.addButtonText}>+ Ajouter</Text>
+                      </TouchableOpacity>
+                    </View>
 
-                      return (
-                        <View key={photo.id} style={styles.photoContainer}>
-                          <Image
-                            source={{ uri: photoUrl }}
-                            style={styles.photoThumbnail as any}
-                          />
-                          <View style={styles.photoInfo}>
-                            <Text style={styles.photoOrder}>
-                              Ordre: {photo.ordre_affichage}
-                            </Text>
+                    {/* Tableau des photos */}
+                    <View style={styles.table}>
+                      {/* En-tête du tableau */}
+                      <View style={styles.tableHeader}>
+                        <Text style={[styles.tableHeaderText, styles.colExtraLarge]}>
+                          URL de l'image
+                        </Text>
+                        <Text style={[styles.tableHeaderText, styles.colSmall]}>
+                          Ordre
+                        </Text>
+                        <Text style={[styles.tableHeaderText, styles.colAction]}>
+
+                        </Text>
+                      </View>
+
+                      {/* Lignes du tableau */}
+                      {editablePhotos.map((photo) => {
+                        let photoUrl = photo.photo_url;
+                        if (photo.storage_path) {
+                          const { data } = supabase.storage
+                            .from('galerie')
+                            .getPublicUrl(photo.storage_path);
+                          photoUrl = data.publicUrl;
+                        }
+
+                        return (
+                          <View key={photo.id} style={styles.tableRow}>
+                            <View style={[styles.colExtraLarge, styles.photoUrlContainer]}>
+                              <TextInput
+                                style={[styles.tableInput, { flex: 1, marginRight: Spacing.xs }]}
+                                value={photo.photo_url || ''}
+                                placeholder="https://..."
+                                placeholderTextColor={Colors.textSecondary}
+                                onChangeText={(text) => {
+                                  const updated = editablePhotos.map((p) =>
+                                    p.id === photo.id ? { ...p, photo_url: text } : p
+                                  );
+                                  setEditablePhotos(updated);
+                                }}
+                              />
+                              {photoUrl && (
+                                <Image
+                                  source={{ uri: photoUrl }}
+                                  style={styles.photoPreview as any}
+                                />
+                              )}
+                            </View>
+                            <TextInput
+                              style={[styles.tableInput, styles.colSmall]}
+                              value={String(photo.ordre_affichage)}
+                              keyboardType="numeric"
+                              onChangeText={(text) => {
+                                const updated = editablePhotos.map((p) =>
+                                  p.id === photo.id
+                                    ? { ...p, ordre_affichage: parseInt(text) || 0 }
+                                    : p
+                                );
+                                setEditablePhotos(updated);
+                              }}
+                            />
+                            <TouchableOpacity
+                              style={[styles.iconButton, styles.colAction]}
+                              onPress={() => deleteEntreprisePhoto(photo.id, ent.id)}
+                            >
+                              <Text style={styles.deleteIcon}>🗑️</Text>
+                            </TouchableOpacity>
                           </View>
-                        </View>
-                      );
-                    })}
-                  </ScrollView>
+                        );
+                      })}
+                    </View>
+
+                    {/* Bouton sauvegarder photos */}
+                    <TouchableOpacity
+                      style={styles.saveAllButton}
+                      onPress={() => saveEntreprisePhotos(ent.id)}
+                    >
+                      <Text style={styles.saveAllButtonText}>
+                        💾 Sauvegarder photos
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               )}
             </View>
@@ -1212,7 +1389,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     marginTop: Spacing.md,
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.textSecondary,
   },
@@ -1223,9 +1400,9 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border,
   },
   headerTitle: {
-    fontFamily: Typography.fontFamily.heading.bold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.xxl,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   tabs: {
     flexDirection: 'row',
@@ -1242,7 +1419,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.primary,
   },
   tabText: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.textSecondary,
   },
@@ -1260,14 +1437,14 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    fontFamily: Typography.fontFamily.heading.bold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.xl,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   subSectionTitle: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.lg,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   addButton: {
     backgroundColor: Colors.primary,
@@ -1282,7 +1459,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   addButtonText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.surface,
   },
@@ -1301,7 +1478,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteButtonText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.surface,
   },
@@ -1323,13 +1500,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryNameCompact: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.lg,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   categoryOrderCompact: {
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.textSecondary,
   },
@@ -1358,9 +1535,9 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   categoryName: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.lg,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   categoryMeta: {
@@ -1369,7 +1546,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   categoryOrder: {
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.textSecondary,
   },
@@ -1385,7 +1562,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.textTertiary,
   },
   statusText: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.surface,
   },
@@ -1404,9 +1581,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   inputLabel: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   input: {
@@ -1415,9 +1592,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
     padding: Spacing.sm,
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   textArea: {
     minHeight: 100,
@@ -1430,7 +1607,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   saveButtonText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.surface,
   },
@@ -1455,12 +1632,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   entrepriseName: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.lg,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   entrepriseCategory: {
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.textSecondary,
     marginTop: Spacing.xs,
@@ -1485,7 +1662,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   photoOrder: {
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.textSecondary,
     textAlign: 'center',
@@ -1501,9 +1678,9 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   subCategoriesTitle: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.md,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   table: {
     backgroundColor: Colors.background,
@@ -1517,7 +1694,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
   },
   tableHeaderText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.surface,
   },
@@ -1535,9 +1712,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
     padding: Spacing.sm,
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginRight: Spacing.xs,
   },
   tableInputLarge: {
@@ -1554,9 +1731,24 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: Spacing.xs,
   },
+  colExtraLarge: {
+    flex: 5,
+    marginRight: Spacing.xs,
+  },
   colAction: {
     width: 40,
     alignItems: 'center',
+  },
+  photoUrlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  photoPreview: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   saveAllButton: {
     backgroundColor: Colors.success,
@@ -1566,7 +1758,7 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   saveAllButtonText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.surface,
   },
@@ -1580,9 +1772,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   inputLabelCompact: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   inputCompact: {
@@ -1591,9 +1783,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
     padding: Spacing.sm,
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
-    color: Colors.text,
+    color: Colors.textPrimary,
   },
   textAreaCompact: {
     minHeight: 60,
@@ -1612,7 +1804,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   usageBadgeText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.surface,
   },
@@ -1630,7 +1822,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   usageBadgeTextSmall: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.surface,
   },
@@ -1642,7 +1834,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   categoryCheckboxTitle: {
-    fontFamily: Typography.fontFamily.heading.semibold,
+    fontFamily: Typography.fontFamily.heading,
     fontSize: Typography.size.md,
     color: Colors.textPrimary,
     marginBottom: Spacing.xs,
@@ -1690,7 +1882,7 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.xs,
   },
   principaleBadgeText: {
-    fontFamily: Typography.fontFamily.body.bold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.surface,
   },
@@ -1704,7 +1896,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   setPrincipaleText: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.xs,
     color: Colors.surface,
   },
@@ -1721,9 +1913,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     borderRadius: BorderRadius.sm,
     padding: Spacing.sm,
-    fontFamily: Typography.fontFamily.body.regular,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
-    color: Colors.text,
+    color: Colors.textPrimary,
     marginBottom: Spacing.xs,
   },
   addSousCategoryButton: {
@@ -1734,7 +1926,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   addSousCategoryButtonText: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.sm,
     color: Colors.surface,
   },
@@ -1747,7 +1939,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
   },
   toggleHeaderText: {
-    fontFamily: Typography.fontFamily.body.semibold,
+    fontFamily: Typography.fontFamily.body,
     fontSize: Typography.size.md,
     color: Colors.textPrimary,
   },

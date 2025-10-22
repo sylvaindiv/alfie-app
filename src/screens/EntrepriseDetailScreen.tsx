@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { supabase } from '../config/supabase';
 import { Entreprise } from '../types/database.types';
-import { Colors, Spacing, Typography, CommonStyles, BorderRadius, Shadows } from '../theme';
+import { Colors, Spacing, Typography, CommonStyles, BorderRadius, getShadow } from '../theme';
 
 const { width } = Dimensions.get('window');
 
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    ...Shadows.small,
+    ...getShadow('small'),
   },
   mapButton: {
     flexDirection: 'row',
@@ -847,7 +847,7 @@ const styles = StyleSheet.create({
   },
   ctaButton: {
     ...CommonStyles.buttonPrimary,
-    ...Shadows.medium,
+    ...getShadow('medium'),
   },
   ctaText: {
     color: Colors.textOnPrimary,

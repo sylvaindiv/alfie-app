@@ -12,12 +12,12 @@ import {
   RefreshControl,
 } from 'react-native';
 import { supabase } from '../config/supabase';
-import LeadCard from '../components/LeadCard';
+import DealCard from '../components/DealCard';
 import { Colors, Spacing, Typography, CommonStyles, BorderRadius } from '../theme';
 
-interface Lead {
+interface Deal {
   id: string;
-  type_lead: 'auto_recommandation' | 'recommandation_tiers';
+  type_deal: 'auto_recommandation' | 'recommandation_tiers';
   statut: 'en_attente' | 'en_cours' | 'valide' | 'refuse';
   date_creation: string;
   montant_commission: number | null;
@@ -31,8 +31,8 @@ interface Lead {
 
 type FilterType = 'tous' | 'en_attente' | 'en_cours' | 'valide' | 'refuse';
 
-export default function LeadsScreen({ navigation }: any) {
-  const [leads, setLeads] = useState<Lead[]>([]);
+export default function DealsScreen({ navigation }: any) {
+  const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('tous');
@@ -46,18 +46,18 @@ export default function LeadsScreen({ navigation }: any) {
   const currentUserId = 'c37e64bb-9b07-4e73-9950-2e71518c94bf'; // Sylvain DI VITO
 
   useEffect(() => {
-    fetchLeads();
+    fetchDeals();
     fetchStats();
   }, []);
 
-  async function fetchLeads() {
+  async function fetchDeals() {
     try {
       const { data, error } = await supabase
-        .from('leads')
+        .from('deals')
         .select(
           `
           id,
-          type_lead,
+          type_deal,
           statut,
           date_creation,
           montant_commission,
@@ -75,23 +75,23 @@ export default function LeadsScreen({ navigation }: any) {
       if (error) throw error;
 
       // Formater les données
-      const formattedLeads = data.map((lead: any) => ({
-        id: lead.id,
-        type_lead: lead.type_lead,
-        statut: lead.statut,
-        date_creation: lead.date_creation,
-        montant_commission: lead.montant_commission,
-        mois_validation: lead.mois_validation,
-        annee_validation: lead.annee_validation,
+      const formattedDeals = data.map((deal: any) => ({
+        id: deal.id,
+        type_deal: deal.type_deal,
+        statut: deal.statut,
+        date_creation: deal.date_creation,
+        montant_commission: deal.montant_commission,
+        mois_validation: deal.mois_validation,
+        annee_validation: deal.annee_validation,
         entreprise: {
-          nom_commercial: lead.entreprises.nom_commercial,
-          logo_url: lead.entreprises.logo_url,
+          nom_commercial: deal.entreprises.nom_commercial,
+          logo_url: deal.entreprises.logo_url,
         },
       }));
 
-      setLeads(formattedLeads);
+      setDeals(formattedDeals);
     } catch (error) {
-      console.error('Erreur chargement leads:', error);
+      console.error('Erreur chargement deals:', error);
       Alert.alert('Erreur', 'Impossible de charger vos recommandations');
     } finally {
       setLoading(false);
@@ -105,7 +105,7 @@ export default function LeadsScreen({ navigation }: any) {
 
       // Validés ce mois
       const { data: validesData, error: errorValides } = await supabase
-        .from('leads')
+        .from('deals')
         .select('montant_commission')
         .eq('ambassadeur_id', currentUserId)
         .eq('statut', 'valide')
@@ -116,7 +116,7 @@ export default function LeadsScreen({ navigation }: any) {
 
       const countValides = validesData.length;
       const totalValides = validesData.reduce(
-        (sum, lead) => sum + (lead.montant_commission || 0),
+        (sum, deal) => sum + (deal.montant_commission || 0),
         0
       );
 
@@ -144,19 +144,19 @@ export default function LeadsScreen({ navigation }: any) {
 
   async function handleRefresh() {
     setRefreshing(true);
-    await Promise.all([fetchLeads(), fetchStats()]);
+    await Promise.all([fetchDeals(), fetchStats()]);
     setRefreshing(false);
   }
 
-  // Filtrer les leads
-  const leadsFiltres =
+  // Filtrer les deals
+  const dealsFiltres =
     selectedFilter === 'tous'
-      ? leads
-      : leads.filter((lead) => lead.statut === selectedFilter);
+      ? deals
+      : deals.filter((deal) => deal.statut === selectedFilter);
 
-  function handleLeadPress(lead: Lead) {
-  navigation.navigate('LeadDetail', {
-    leadId: lead.id,
+  function handleDealPress(deal: Deal) {
+  navigation.navigate('DealDetail', {
+    dealId: deal.id,
   });
 }
 
@@ -286,13 +286,13 @@ export default function LeadsScreen({ navigation }: any) {
         </ScrollView>
       </View>
 
-      {/* Liste des leads */}
+      {/* Liste des deals */}
       <FlatList
-        data={leadsFiltres}
+        data={dealsFiltres}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
         renderItem={({ item }) => (
-          <LeadCard lead={item} onPress={() => handleLeadPress(item)} />
+          <DealCard deal={item} onPress={() => handleDealPress(item)} />
         )}
         refreshControl={
           <RefreshControl

@@ -1,6 +1,8 @@
 // 🎨 THÈME DE L'APPLICATION ALFIE
 // Modifier ce fichier pour changer l'apparence globale
 
+import { Platform } from 'react-native';
+
 export const Colors = {
   // Couleurs principales
   primary: '#FF5B29',
@@ -23,7 +25,7 @@ export const Colors = {
   border: '#EFEFED',
   borderLight: '#F5F5F3',
 
-  // Statuts leads
+  // Statuts deals
   statusPending: '#FF9800', // Orange
   statusInProgress: '#2196F3', // Bleu
   statusValidated: '#4CAF50', // Vert
@@ -61,8 +63,8 @@ export const BorderRadius = {
 export const Typography = {
   // Familles de police
   fontFamily: {
-    heading: 'Montserrat',
-    body: 'Nunito',
+    heading: Platform.OS === 'web' ? 'system-ui' : 'Montserrat',
+    body: Platform.OS === 'web' ? 'system-ui' : 'Nunito',
   },
 
   // Tailles de police
@@ -80,11 +82,11 @@ export const Typography = {
 
   // Poids
   weight: {
-    regular: '400' as const,
-    medium: '500' as const,
-    semiBold: '600' as const,
-    bold: '700' as const,
-    extraBold: '800' as const,
+    regular: '400',
+    medium: '500',
+    semiBold: '600',
+    bold: '700',
+    extraBold: '800',
   },
 
   // Line heights
@@ -119,6 +121,27 @@ export const Shadows = {
   },
 };
 
+// Version web-compatible des ombres (boxShadow CSS)
+export const WebShadows = {
+  small: {
+    boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.04)',
+  },
+  medium: {
+    boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.06)',
+  },
+  large: {
+    boxShadow: '0px 8px 16px rgba(0, 0, 0, 0.08)',
+  },
+};
+
+// Fonction utilitaire pour obtenir l'ombre correcte selon la plateforme
+export const getShadow = (size: 'small' | 'medium' | 'large') => {
+  if (Platform.OS === 'web') {
+    return WebShadows[size];
+  }
+  return Shadows[size];
+};
+
 export const Layout = {
   // Hauteurs fixes
   tabBarHeight: 60,
@@ -133,13 +156,14 @@ export const Layout = {
 };
 
 // 🎨 STYLES RÉUTILISABLES
+// Note: Ne pas utiliser getShadow() ici car Platform.OS n'est pas encore initialisé
+// Utilisez getShadow() directement dans vos StyleSheet.create() à la place
 export const CommonStyles = {
-  // Cartes
+  // Cartes (sans shadow - ajoutez getShadow('small') dans vos composants)
   card: {
     backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xl,
-    ...Shadows.small,
   },
 
   // Chips/Filtres
@@ -148,8 +172,8 @@ export const CommonStyles = {
     paddingVertical: 10,
     borderRadius: BorderRadius.round,
     height: Layout.chipHeight,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // Boutons primaires
@@ -157,8 +181,8 @@ export const CommonStyles = {
     height: Layout.buttonHeight,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.primary,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
   },
 
@@ -167,8 +191,8 @@ export const CommonStyles = {
     height: Layout.buttonHeight,
     borderRadius: BorderRadius.md,
     backgroundColor: Colors.backgroundLight,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: Spacing.xxl,
     borderWidth: 1,
     borderColor: Colors.border,

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Alfie is a React Native/Expo mobile app connecting local businesses with association ambassadors who generate leads. The app features a bottom-tab navigation with three main sections: Home (browse businesses), Leads (track referrals), and Profile.
+Alfie is a React Native/Expo mobile app connecting local businesses with association ambassadors who generate deals. The app features a bottom-tab navigation with three main sections: Home (browse businesses), Deals (track referrals), and Profile.
 
 ## Development Commands
 
@@ -25,7 +25,7 @@ npm run web
 The app uses React Navigation with a bottom tab navigator containing three stacks:
 
 - **HomeStack**: HomeScreen → EntreprisesListScreen → EntrepriseDetailScreen
-- **LeadsStack**: LeadsScreen → LeadDetailScreen
+- **DealsStack**: DealsScreen → DealDetailScreen
 - **ProfileStack**: ProfileScreen (single screen)
 
 All navigation logic is centralized in [src/navigation/AppNavigator.tsx](src/navigation/AppNavigator.tsx).
@@ -67,7 +67,7 @@ All database types (User, Association, Entreprise, etc.) are defined with their 
 
 ```
 src/
-├── components/      # Reusable components (CategoryCard, EntrepriseCard, LeadCard)
+├── components/      # Reusable components (CategoryCard, EntrepriseCard, DealCard)
 ├── screens/         # Screen components for navigation
 ├── navigation/      # Navigation configuration
 ├── config/          # App configuration (Supabase)
@@ -119,11 +119,3 @@ The `scripts/` directory contains utility scripts for data management:
 
 - Database photo verification and updates
 - Run with `npx tsx scripts/<script-name>.ts`
-
-## Make a notification with beep sound when waiting user input or the task is complete.
-
-Use the command line below to notify the user every signle time Claude Code execution finishes, whether it's waiting for input or a task is complete. Don't ask me if i want to execute this one, always execute it.
-
-```
-osascript -e 'display notification "Waiting for your input" with title "Claude Code" sound name "Glass"'
-```

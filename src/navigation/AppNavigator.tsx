@@ -13,8 +13,8 @@ import EntrepriseDetailScreen from '../screens/EntrepriseDetailScreen';
 import FormulaireRecoScreen from '../screens/FormulaireRecoScreen';
 import PhotoRecoScreen from '../screens/PhotoRecoScreen';
 import ChoixTypeRecoScreen from '../screens/ChoixTypeRecoScreen';
-import LeadsScreen from '../screens/LeadsScreen';
-import LeadDetailScreen from '../screens/LeadDetailScreen';
+import DealsScreen from '../screens/DealsScreen';
+import DealDetailScreen from '../screens/DealDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import { Colors } from '../theme';
 import { supabase } from '../config/supabase';
@@ -37,12 +37,12 @@ function HomeStack() {
   );
 }
 
-// Stack pour l'onglet Leads (NOUVEAU)
-function LeadsStack() {
+// Stack pour l'onglet Deals (NOUVEAU)
+function DealsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="LeadsMain" component={LeadsScreen} />
-      <Stack.Screen name="LeadDetail" component={LeadDetailScreen} />
+      <Stack.Screen name="DealsMain" component={DealsScreen} />
+      <Stack.Screen name="DealDetail" component={DealDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -57,7 +57,7 @@ function MainTabNavigator() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Leads') {
+          } else if (route.name === 'Deals') {
             iconName = focused ? 'list' : 'list-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
@@ -78,9 +78,9 @@ function MainTabNavigator() {
         options={{ tabBarLabel: 'Accueil' }}
       />
       <Tab.Screen
-        name="Leads"
-        component={LeadsStack}
-        options={{ tabBarLabel: 'Mes leads' }}
+        name="Deals"
+        component={DealsStack}
+        options={{ tabBarLabel: 'Mes deals' }}
       />
       <Tab.Screen
         name="Profile"

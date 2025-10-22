@@ -72,9 +72,9 @@ export interface Entreprise {
   type_recommandation_autorise: 'photo' | 'formulaire' | 'les_deux';
   statut_abonnement: 'actif' | 'inactif' | 'suspendu';
   montant_abonnement_mensuel: number | null;
-  nb_leads_recus: number;
-  nb_leads_valides: number;
-  nb_leads_refuses: number;
+  nb_deals_recus: number;
+  nb_deals_valides: number;
+  nb_deals_refuses: number;
   total_commissions_versees: number;
   created_at: string;
 }

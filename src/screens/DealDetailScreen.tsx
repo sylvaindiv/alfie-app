@@ -15,18 +15,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Colors, Spacing, Typography, CommonStyles, BorderRadius, Shadows } from '../theme';
 
-interface LeadDetailScreenProps {
+interface DealDetailScreenProps {
   route: {
     params: {
-      leadId: string;
+      dealId: string;
     };
   };
   navigation: any;
 }
 
-interface LeadDetail {
+interface DealDetail {
   id: string;
-  type_lead: 'auto_recommandation' | 'recommandation_tiers';
+  type_deal: 'auto_recommandation' | 'recommandation_tiers';
   statut: 'en_attente' | 'en_cours' | 'valide' | 'refuse';
   date_creation: string;
   date_changement_statut: string | null;
@@ -77,65 +77,65 @@ const STATUS_CONFIG = {
   refuse: { bg: '#F44336', text: 'Refusé', icon: 'close-circle-outline' as const },
 };
 
-export default function LeadDetailScreen({
+export default function DealDetailScreen({
   route,
   navigation,
-}: LeadDetailScreenProps) {
-  const { leadId } = route.params;
+}: DealDetailScreenProps) {
+  const { dealId } = route.params;
 
-  const [lead, setLead] = useState<LeadDetail | null>(null);
+  const [deal, setDeal] = useState<DealDetail | null>(null);
   const [preuvePhoto, setPreuvePhoto] = useState<PreuvePhoto | null>(null);
   const [commentaires, setCommentaires] = useState<Commentaire[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchLeadDetails();
-  }, [leadId]);
+    fetchDealDetails();
+  }, [dealId]);
 
-  async function fetchLeadDetails() {
+  async function fetchDealDetails() {
     try {
-      // Récupérer le lead
-      const { data: leadData, error: errorLead } = await supabase
-        .from('leads')
+      // Récupérer le deal
+      const { data: dealData, error: errorDeal } = await supabase
+        .from('deals')
         .select(`
           *,
           entreprises (nom_commercial, logo_url),
           associations (nom, logo_url)
         `)
-        .eq('id', leadId)
+        .eq('id', dealId)
         .single();
 
-      if (errorLead) throw errorLead;
+      if (errorDeal) throw errorDeal;
 
-      setLead({
-        id: leadData.id,
-        type_lead: leadData.type_lead,
-        statut: leadData.statut,
-        date_creation: leadData.date_creation,
-        date_changement_statut: leadData.date_changement_statut,
-        montant_commission: leadData.montant_commission,
-        motif_refus: leadData.motif_refus,
-        nom_prospect: leadData.nom_prospect,
-        prenom_prospect: leadData.prenom_prospect,
-        telephone_prospect: leadData.telephone_prospect,
-        email_prospect: leadData.email_prospect,
-        commentaire_initial: leadData.commentaire_initial,
+      setDeal({
+        id: dealData.id,
+        type_deal: dealData.type_deal,
+        statut: dealData.statut,
+        date_creation: dealData.date_creation,
+        date_changement_statut: dealData.date_changement_statut,
+        montant_commission: dealData.montant_commission,
+        motif_refus: dealData.motif_refus,
+        nom_prospect: dealData.nom_prospect,
+        prenom_prospect: dealData.prenom_prospect,
+        telephone_prospect: dealData.telephone_prospect,
+        email_prospect: dealData.email_prospect,
+        commentaire_initial: dealData.commentaire_initial,
         entreprise: {
-          nom_commercial: leadData.entreprises.nom_commercial,
-          logo_url: leadData.entreprises.logo_url,
+          nom_commercial: dealData.entreprises.nom_commercial,
+          logo_url: dealData.entreprises.logo_url,
         },
         association: {
-          nom: leadData.associations.nom,
-          logo_url: leadData.associations.logo_url,
+          nom: dealData.associations.nom,
+          logo_url: dealData.associations.logo_url,
         },
       });
 
       // Si auto-recommandation, récupérer la preuve photo
-      if (leadData.type_lead === 'auto_recommandation') {
+      if (dealData.type_deal === 'auto_recommandation') {
         const { data: photoData, error: errorPhoto } = await supabase
           .from('preuves_photos')
           .select('*')
-          .eq('lead_id', leadId)
+          .eq('deal_id', dealId)
           .single();
 
         if (!errorPhoto && photoData) {
@@ -145,12 +145,12 @@ export default function LeadDetailScreen({
 
       // Récupérer les commentaires
       const { data: commentsData, error: errorComments } = await supabase
-        .from('commentaires_leads')
+        .from('commentaires_deals')
         .select(`
           *,
           users (nom, prenom)
         `)
-        .eq('lead_id', leadId)
+        .eq('deal_id', dealId)
         .order('created_at', { ascending: true });
 
       if (!errorComments && commentsData) {
@@ -167,7 +167,7 @@ export default function LeadDetailScreen({
         setCommentaires(formattedComments);
       }
     } catch (error) {
-      console.error('Erreur chargement lead:', error);
+      console.error('Erreur chargement deal:', error);
       Alert.alert('Erreur', 'Impossible de charger les détails');
     } finally {
       setLoading(false);
@@ -175,14 +175,14 @@ export default function LeadDetailScreen({
   }
 
   function handleCall() {
-    if (lead?.telephone_prospect) {
-      Linking.openURL(`tel:${lead.telephone_prospect}`);
+    if (deal?.telephone_prospect) {
+      Linking.openURL(`tel:${deal.telephone_prospect}`);
     }
   }
 
   function handleEmail() {
-    if (lead?.email_prospect) {
-      Linking.openURL(`mailto:${lead.email_prospect}`);
+    if (deal?.email_prospect) {
+      Linking.openURL(`mailto:${deal.email_prospect}`);
     }
   }
 
@@ -194,18 +194,18 @@ export default function LeadDetailScreen({
     );
   }
 
-  if (!lead) {
+  if (!deal) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Lead introuvable</Text>
+        <Text style={styles.errorText}>Deal introuvable</Text>
       </View>
     );
   }
 
-  const statusConfig = STATUS_CONFIG[lead.statut];
+  const statusConfig = STATUS_CONFIG[deal.statut];
 
   // Format dates
-  const dateCreation = new Date(lead.date_creation).toLocaleDateString('fr-FR', {
+  const dateCreation = new Date(deal.date_creation).toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -213,8 +213,8 @@ export default function LeadDetailScreen({
     minute: '2-digit',
   });
 
-  const dateValidation = lead.date_changement_statut
-    ? new Date(lead.date_changement_statut).toLocaleDateString('fr-FR', {
+  const dateValidation = deal.date_changement_statut
+    ? new Date(deal.date_changement_statut).toLocaleDateString('fr-FR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric',
@@ -238,15 +238,15 @@ export default function LeadDetailScreen({
       <ScrollView style={styles.scrollView}>
         {/* Entreprise */}
         <View style={styles.entrepriseCard}>
-          {lead.entreprise.logo_url && (
+          {deal.entreprise.logo_url && (
             <Image
-              source={{ uri: lead.entreprise.logo_url }}
+              source={{ uri: deal.entreprise.logo_url }}
               style={styles.entrepriseLogo}
             />
           )}
           <View style={styles.entrepriseInfo}>
             <Text style={styles.entrepriseNom}>
-              {lead.entreprise.nom_commercial}
+              {deal.entreprise.nom_commercial}
             </Text>
             <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
               <Ionicons name={statusConfig.icon} size={16} color="#FFFFFF" />
@@ -262,7 +262,7 @@ export default function LeadDetailScreen({
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Type :</Text>
             <Text style={styles.infoValue}>
-              {lead.type_lead === 'auto_recommandation'
+              {deal.type_deal === 'auto_recommandation'
                 ? '📸 Auto-recommandation'
                 : '📝 Recommandation tiers'}
             </Text>
@@ -275,47 +275,47 @@ export default function LeadDetailScreen({
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Association :</Text>
-            <Text style={styles.infoValue}>{lead.association.nom}</Text>
+            <Text style={styles.infoValue}>{deal.association.nom}</Text>
           </View>
         </View>
 
         {/* Infos prospect (si formulaire) */}
-        {lead.type_lead === 'recommandation_tiers' && (
+        {deal.type_deal === 'recommandation_tiers' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>👤 Prospect</Text>
             
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Nom :</Text>
               <Text style={styles.infoValue}>
-                {lead.prenom_prospect} {lead.nom_prospect}
+                {deal.prenom_prospect} {deal.nom_prospect}
               </Text>
             </View>
 
-            {lead.telephone_prospect && (
+            {deal.telephone_prospect && (
               <TouchableOpacity style={styles.contactRow} onPress={handleCall}>
                 <Ionicons name="call-outline" size={20} color={Colors.primary} />
-                <Text style={styles.contactText}>{lead.telephone_prospect}</Text>
+                <Text style={styles.contactText}>{deal.telephone_prospect}</Text>
               </TouchableOpacity>
             )}
 
-            {lead.email_prospect && (
+            {deal.email_prospect && (
               <TouchableOpacity style={styles.contactRow} onPress={handleEmail}>
                 <Ionicons name="mail-outline" size={20} color={Colors.primary} />
-                <Text style={styles.contactText}>{lead.email_prospect}</Text>
+                <Text style={styles.contactText}>{deal.email_prospect}</Text>
               </TouchableOpacity>
             )}
 
-            {lead.commentaire_initial && (
+            {deal.commentaire_initial && (
               <View style={styles.commentBox}>
                 <Text style={styles.commentLabel}>💬 Commentaire initial :</Text>
-                <Text style={styles.commentText}>{lead.commentaire_initial}</Text>
+                <Text style={styles.commentText}>{deal.commentaire_initial}</Text>
               </View>
             )}
           </View>
         )}
 
         {/* Preuve photo (si auto-reco) */}
-        {lead.type_lead === 'auto_recommandation' && preuvePhoto && (
+        {deal.type_deal === 'auto_recommandation' && preuvePhoto && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>📸 Preuve de visite</Text>
             <Image
@@ -336,12 +336,12 @@ export default function LeadDetailScreen({
         )}
 
         {/* Commission (si validé) */}
-        {lead.statut === 'valide' && lead.montant_commission && (
+        {deal.statut === 'valide' && deal.montant_commission && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>💰 Commission</Text>
             <View style={styles.commissionCard}>
               <Text style={styles.commissionAmount}>
-                {lead.montant_commission}€
+                {deal.montant_commission}€
               </Text>
               {dateValidation && (
                 <Text style={styles.commissionDate}>
@@ -353,11 +353,11 @@ export default function LeadDetailScreen({
         )}
 
         {/* Motif refus */}
-        {lead.statut === 'refuse' && lead.motif_refus && (
+        {deal.statut === 'refuse' && deal.motif_refus && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>❌ Refus</Text>
             <View style={styles.refusCard}>
-              <Text style={styles.refusText}>{lead.motif_refus}</Text>
+              <Text style={styles.refusText}>{deal.motif_refus}</Text>
             </View>
           </View>
         )}

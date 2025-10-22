@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Entreprise } from '../types/database.types';
-import { Colors, Spacing, Typography, BorderRadius, Shadows } from '../theme';
+import { Colors, Spacing, Typography, BorderRadius, getShadow } from '../theme';
 import { supabase } from '../config/supabase';
 
 interface EntrepriseCardHorizontalProps {
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.md,
-    ...Shadows.medium,
+    ...getShadow('medium'),
   },
   badgePercentage: {
     backgroundColor: 'rgba(255, 91, 41, 1)',

@@ -1,7 +1,7 @@
 # ALFIE APP - RÈGLES DE DÉVELOPPEMENT
 
 ## 📱 CONTEXTE DU PROJET
-Application mobile React Native / Expo pour mettre en relation des entreprises locales avec des ambassadeurs d'associations qui génèrent des leads.
+Application mobile React Native / Expo pour mettre en relation des entreprises locales avec des ambassadeurs d'associations qui génèrent des deals.
 
 ## 🎨 DESIGN SYSTEM
 ### Couleurs
@@ -56,7 +56,7 @@ import { Colors, Spacing, Typography, CommonStyles, BorderRadius } from '../them
 
 ### 4. Navigation
 - HomeStack : Accueil, Liste entreprises, Fiche entreprise
-- LeadsStack : Mes leads, Détail lead
+- DealsStack : Mes deals, Détail deal
 - ProfileStack : Profil (à créer)
 
 ### 5. Supabase

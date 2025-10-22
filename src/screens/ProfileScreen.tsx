@@ -27,8 +27,8 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const [user, setUser] = useState<any>(null);
   const [associations, setAssociations] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    leadsCreated: 0,
-    leadsValidated: 0,
+    dealsCreated: 0,
+    dealsValidated: 0,
     totalCommissions: 0,
   });
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -66,21 +66,21 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       setAssociations(assosData || []);
 
       // Calculer les statistiques
-      let totalLeadsCreated = 0;
-      let totalLeadsValidated = 0;
+      let totalDealsCreated = 0;
+      let totalDealsValidated = 0;
       let totalCommissions = 0;
 
       if (assosData) {
         assosData.forEach((ambassadeur: any) => {
-          totalLeadsCreated += ambassadeur.nb_leads_crees || 0;
-          totalLeadsValidated += ambassadeur.nb_leads_valides || 0;
+          totalDealsCreated += ambassadeur.nb_deals_crees || 0;
+          totalDealsValidated += ambassadeur.nb_deals_valides || 0;
           totalCommissions += parseFloat(ambassadeur.total_commissions || 0);
         });
       }
 
       setStats({
-        leadsCreated: totalLeadsCreated,
-        leadsValidated: totalLeadsValidated,
+        dealsCreated: totalDealsCreated,
+        dealsValidated: totalDealsValidated,
         totalCommissions: totalCommissions,
       });
     } catch (error) {
@@ -242,21 +242,21 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         <Text style={styles.sectionTitle}>Statistiques</Text>
 
         <View style={styles.statsContainer}>
-          {/* Leads créés */}
+          {/* Deals créés */}
           <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: Colors.info + '20' }]}>
               <Ionicons name="add-circle" size={28} color={Colors.info} />
             </View>
-            <Text style={styles.statValue}>{stats.leadsCreated}</Text>
-            <Text style={styles.statLabel}>Leads créés</Text>
+            <Text style={styles.statValue}>{stats.dealsCreated}</Text>
+            <Text style={styles.statLabel}>Deals créés</Text>
           </View>
 
-          {/* Leads validés */}
+          {/* Deals validés */}
           <View style={styles.statCard}>
             <View style={[styles.statIcon, { backgroundColor: Colors.success + '20' }]}>
               <Ionicons name="checkmark-circle" size={28} color={Colors.success} />
             </View>
-            <Text style={styles.statValue}>{stats.leadsValidated}</Text>
+            <Text style={styles.statValue}>{stats.dealsValidated}</Text>
             <Text style={styles.statLabel}>Validés</Text>
           </View>
 

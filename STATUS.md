@@ -60,15 +60,15 @@
    - CTA "Créer une recommandation" ✅ (Connecté le 20 oct)
    - Routing intelligent basé sur `type_recommandation_autorise`
 
-4. **LeadsScreen** ✅
+4. **DealsScreen** ✅
 
    - Stats cards (validés ce mois + total commissions)
    - Filtres par statut et association
-   - Liste des leads
+   - Liste des deals
 
-5. **LeadDetailScreen** ✅
+5. **DealDetailScreen** ✅
 
-   - Détails complets du lead
+   - Détails complets du deal
    - Preuve photo (si auto-reco)
    - Commentaires entreprise
 
@@ -97,9 +97,9 @@
    - Formulaire complet : Prénom*, Nom*, Téléphone*, Email, Commentaire
    - Sélecteur d'association (si plusieurs)
    - Validation des champs obligatoires
-   - Création lead type `recommandation_tiers` dans Supabase
+   - Création deal type `recommandation_tiers` dans Supabase
    - Incrémentation automatique des compteurs (ambassadeur + entreprise)
-   - Redirection vers l'onglet Leads après succès
+   - Redirection vers l'onglet Deals après succès
    - Intégré au HomeStack de la navigation
 
 9. **PhotoRecoScreen** ✅ (Créé le 20 oct)
@@ -109,12 +109,12 @@
    - Prévisualisation de la photo avec bouton de suppression
    - Sélecteur d'association (si plusieurs)
    - Upload photo vers Supabase Storage (`photos-preuves`)
-   - Création lead type `auto_recommandation` dans Supabase
-   - Création entrée `preuves_photos` liée au lead
+   - Création deal type `auto_recommandation` dans Supabase
+   - Création entrée `preuves_photos` liée au deal
    - Incrémentation automatique des compteurs (ambassadeur + entreprise)
    - Affichage de la commission potentielle
    - Bouton désactivé si aucune photo
-   - Redirection vers l'onglet Leads après succès
+   - Redirection vers l'onglet Deals après succès
    - Intégré au HomeStack de la navigation
 
 10. **ChoixTypeRecoScreen** ✅ (Créé le 20 oct)
@@ -133,7 +133,7 @@
 
 - `CategoryCard.tsx` ✅ (thème appliqué)
 - `EntrepriseCard.tsx` ✅ (thème appliqué le 19 oct)
-- `LeadCard.tsx` ✅ (thème appliqué le 19 oct)
+- `DealCard.tsx` ✅ (thème appliqué le 19 oct)
 
 ---
 
@@ -285,8 +285,8 @@ Le flux complet de recommandation est maintenant fonctionnel :
    - **FormulaireReco** si entreprise accepte uniquement les formulaires
    - **ChoixTypeReco** si entreprise accepte les deux
 5. Utilisateur crée la recommandation
-6. Lead créé dans Supabase avec tous les compteurs mis à jour
-7. Redirection vers l'onglet Leads
+6. Deal créé dans Supabase avec tous les compteurs mis à jour
+7. Redirection vers l'onglet Deals
 
 **Prochaines étapes suggérées :**
 

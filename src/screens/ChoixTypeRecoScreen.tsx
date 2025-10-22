@@ -11,7 +11,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Entreprise } from '../types/database.types';
-import { Colors, Spacing, Typography, BorderRadius, CommonStyles, Shadows } from '../theme';
+import { Colors, Spacing, Typography, BorderRadius, CommonStyles, getShadow } from '../theme';
 
 interface ChoixTypeRecoScreenProps {
   route: {
@@ -95,16 +95,20 @@ export default function ChoixTypeRecoScreen({
             onPress={handlePhotoChoice}
             activeOpacity={0.7}
           >
-            <View style={[styles.optionIconContainer, { backgroundColor: Colors.primary + '15' }]}>
-              <Ionicons name="camera" size={48} color={Colors.primary} />
+            <View style={styles.optionContent}>
+              <View style={[styles.optionIconContainer, { backgroundColor: Colors.primary + '15' }]}>
+                <Ionicons name="camera" size={32} color={Colors.primary} />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={styles.optionTitle}>J'ai déjà consommé</Text>
+                <Text style={styles.optionDescription}>
+                  Photo du ticket de caisse ou preuve d'achat
+                </Text>
+              </View>
             </View>
-            <Text style={styles.optionTitle}>Auto-recommandation</Text>
-            <Text style={styles.optionDescription}>
-              Prenez une photo de votre ticket de caisse ou preuve d'achat
-            </Text>
             <View style={styles.optionBadge}>
               <Ionicons name="flash" size={16} color={Colors.warning} />
-              <Text style={styles.optionBadgeText}>Validation rapide</Text>
+              <Text style={styles.optionBadgeText}>Validation requise</Text>
             </View>
           </TouchableOpacity>
 
@@ -121,26 +125,30 @@ export default function ChoixTypeRecoScreen({
             onPress={handleFormulaireChoice}
             activeOpacity={0.7}
           >
-            <View style={[styles.optionIconContainer, { backgroundColor: Colors.info + '15' }]}>
-              <Ionicons name="people" size={48} color={Colors.info} />
+            <View style={styles.optionContent}>
+              <View style={[styles.optionIconContainer, { backgroundColor: Colors.info + '15' }]}>
+                <Ionicons name="call" size={32} color={Colors.info} />
+              </View>
+              <View style={styles.optionTextContainer}>
+                <Text style={styles.optionTitle}>Demande de rappel</Text>
+                <Text style={styles.optionDescription}>
+                  Pour vous ou pour recommander un proche
+                </Text>
+              </View>
             </View>
-            <Text style={styles.optionTitle}>Recommandation de tiers</Text>
-            <Text style={styles.optionDescription}>
-              Recommandez cette entreprise à quelqu'un ou pour vous-même
-            </Text>
             <View style={[styles.optionBadge, { backgroundColor: Colors.info + '15' }]}>
-              <Ionicons name="person-add" size={16} color={Colors.info} />
+              <Ionicons name="document-text" size={16} color={Colors.info} />
               <Text style={[styles.optionBadgeText, { color: Colors.info }]}>Formulaire simple</Text>
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* Info commission */}
+        {/* Info rétribution */}
         {entreprise && (
           <View style={styles.commissionInfo}>
             <Ionicons name="gift-outline" size={20} color={Colors.success} />
             <Text style={styles.commissionText}>
-              Commission :{' '}
+              Rétribution possible :{' '}
               <Text style={styles.commissionAmount}>
                 {entreprise.type_commission === 'montant_fixe'
                   ? `${entreprise.valeur_commission}€`
@@ -181,7 +189,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Typography.size.xl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
   },
   headerPlaceholder: {
@@ -194,7 +202,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Typography.size.xxl,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
     textAlign: 'center',
     marginBottom: Spacing.sm,
@@ -212,33 +220,37 @@ const styles = StyleSheet.create({
   },
   optionCard: {
     ...CommonStyles.card,
-    padding: Spacing.xl,
+    padding: Spacing.lg,
+    ...getShadow('medium'),
+  },
+  optionContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    ...Shadows.medium,
+    marginBottom: Spacing.md,
   },
   optionIconContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.lg,
+    marginRight: Spacing.md,
+  },
+  optionTextContainer: {
+    flex: 1,
   },
   optionTitle: {
-    fontSize: Typography.size.xl,
+    fontSize: Typography.size.lg,
     fontFamily: Typography.fontFamily.heading,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textPrimary,
-    marginBottom: Spacing.sm,
-    textAlign: 'center',
+    marginBottom: Spacing.xs,
   },
   optionDescription: {
-    fontSize: Typography.size.base,
+    fontSize: Typography.size.sm,
     fontFamily: Typography.fontFamily.body,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: Spacing.md,
-    lineHeight: 22,
+    lineHeight: 18,
   },
   optionBadge: {
     flexDirection: 'row',
@@ -248,11 +260,12 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.round,
     gap: Spacing.xs,
+    alignSelf: 'flex-start',
   },
   optionBadgeText: {
     fontSize: Typography.size.sm,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.semiBold,
+    fontWeight: '600',
     color: Colors.warning,
   },
   separatorContainer: {
@@ -268,7 +281,7 @@ const styles = StyleSheet.create({
   separatorText: {
     fontSize: Typography.size.base,
     fontFamily: Typography.fontFamily.body,
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.textSecondary,
     marginHorizontal: Spacing.md,
   },
@@ -288,7 +301,7 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
   },
   commissionAmount: {
-    fontWeight: Typography.weight.bold,
+    fontWeight: '700',
     color: Colors.success,
     fontSize: Typography.size.lg,
   },

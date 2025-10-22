@@ -28,7 +28,7 @@ import {
   Spacing,
   Typography,
   BorderRadius,
-  Shadows,
+  getShadow,
 } from '../theme';
 
 interface CategorySection {
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     borderRadius: BorderRadius.md,
     height: 52,
-    ...Shadows.small,
+    ...getShadow('small'),
   },
   searchIcon: {
     marginRight: Spacing.md,

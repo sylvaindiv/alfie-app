@@ -3,9 +3,9 @@ import { TouchableOpacity, Text, StyleSheet, View, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Spacing, Typography, BorderRadius } from '../theme';
 
-interface Lead {
+interface Deal {
   id: string;
-  type_lead: 'auto_recommandation' | 'recommandation_tiers';
+  type_deal: 'auto_recommandation' | 'recommandation_tiers';
   statut: 'en_attente' | 'en_cours' | 'valide' | 'refuse';
   date_creation: string;
   montant_commission: number | null;
@@ -15,8 +15,8 @@ interface Lead {
   };
 }
 
-interface LeadCardProps {
-  lead: Lead;
+interface DealCardProps {
+  deal: Deal;
   onPress: () => void;
 }
 
@@ -28,11 +28,11 @@ const STATUS_COLORS = {
   refuse: { bg: Colors.statusRejected, text: 'Refusé' },
 };
 
-export default function LeadCard({ lead, onPress }: LeadCardProps) {
-  const statusConfig = STATUS_COLORS[lead.statut];
+export default function DealCard({ deal, onPress }: DealCardProps) {
+  const statusConfig = STATUS_COLORS[deal.statut];
 
   // Format date
-  const date = new Date(lead.date_creation);
+  const date = new Date(deal.date_creation);
   const dateStr = date.toLocaleDateString('fr-FR', {
     day: '2-digit',
     month: '2-digit',
@@ -40,8 +40,8 @@ export default function LeadCard({ lead, onPress }: LeadCardProps) {
   });
 
   // Logo entreprise
-  const logoSource = lead.entreprise.logo_url
-    ? { uri: lead.entreprise.logo_url }
+  const logoSource = deal.entreprise.logo_url
+    ? { uri: deal.entreprise.logo_url }
     : require('../../assets/icon.png');
 
   return (
@@ -53,7 +53,7 @@ export default function LeadCard({ lead, onPress }: LeadCardProps) {
         {/* Infos */}
         <View style={styles.infoContainer}>
           <Text style={styles.nom} numberOfLines={1}>
-            {lead.entreprise.nom_commercial}
+            {deal.entreprise.nom_commercial}
           </Text>
 
           {/* Date */}
@@ -66,10 +66,10 @@ export default function LeadCard({ lead, onPress }: LeadCardProps) {
         </View>
 
         {/* Commission (si validé) */}
-        {lead.statut === 'valide' && lead.montant_commission && (
+        {deal.statut === 'valide' && deal.montant_commission && (
           <View style={styles.commissionContainer}>
             <Text style={styles.commissionText}>
-              {lead.montant_commission}€
+              {deal.montant_commission}€
             </Text>
           </View>
         )}

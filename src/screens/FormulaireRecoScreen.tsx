@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import { Association, Entreprise, User } from '../types/database.types';
-import { Colors, Spacing, Typography, BorderRadius, CommonStyles, Shadows } from '../theme';
+import { Colors, Spacing, Typography, BorderRadius, CommonStyles, getShadow } from '../theme';
 
 interface FormulaireRecoScreenProps {
   route: {
@@ -144,11 +144,11 @@ export default function FormulaireRecoScreen({
     setSubmitting(true);
 
     try {
-      // Créer le lead
-      const { data: leadData, error: leadError } = await supabase
-        .from('leads')
+      // Créer le deal
+      const { data: dealData, error: dealError } = await supabase
+        .from('deals')
         .insert({
-          type_lead: 'recommandation_tiers',
+          type_deal: 'recommandation_tiers',
           ambassadeur_id: USER_ID,
           association_id: selectedAssociationId,
           entreprise_id: entrepriseId,
@@ -163,13 +163,13 @@ export default function FormulaireRecoScreen({
         .select()
         .single();
 
-      if (leadError) throw leadError;
+      if (dealError) throw dealError;
 
-      // Incrémenter le compteur nb_leads_crees de l'ambassadeur
+      // Incrémenter le compteur nb_deals_crees de l'ambassadeur
       // On récupère d'abord la valeur actuelle
       const { data: ambassadeurData } = await supabase
         .from('ambassadeurs')
-        .select('nb_leads_crees')
+        .select('nb_deals_crees')
         .eq('user_id', USER_ID)
         .eq('association_id', selectedAssociationId)
         .single();
@@ -178,7 +178,7 @@ export default function FormulaireRecoScreen({
         const { error: updateError } = await supabase
           .from('ambassadeurs')
           .update({
-            nb_leads_crees: (ambassadeurData.nb_leads_crees || 0) + 1,
+            nb_deals_crees: (ambassadeurData.nb_deals_crees || 0) + 1,
           })
           .eq('user_id', USER_ID)
           .eq('association_id', selectedAssociationId);
@@ -188,10 +188,10 @@ export default function FormulaireRecoScreen({
         }
       }
 
-      // Incrémenter le compteur nb_leads_recus de l'entreprise
+      // Incrémenter le compteur nb_deals_recus de l'entreprise
       const { data: entrepriseData } = await supabase
         .from('entreprises')
-        .select('nb_leads_recus')
+        .select('nb_deals_recus')
         .eq('id', entrepriseId)
         .single();
 
@@ -199,7 +199,7 @@ export default function FormulaireRecoScreen({
         await supabase
           .from('entreprises')
           .update({
-            nb_leads_recus: (entrepriseData.nb_leads_recus || 0) + 1,
+            nb_deals_recus: (entrepriseData.nb_deals_recus || 0) + 1,
           })
           .eq('id', entrepriseId);
       }
@@ -211,13 +211,13 @@ export default function FormulaireRecoScreen({
           {
             text: 'OK',
             onPress: () => {
-              navigation.navigate('Leads');
+              navigation.navigate('Deals');
             },
           },
         ]
       );
     } catch (error) {
-      console.error('Erreur création lead:', error);
+      console.error('Erreur création deal:', error);
       Alert.alert('Erreur', 'Impossible de créer la recommandation');
     } finally {
       setSubmitting(false);
@@ -573,7 +573,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
-    ...Shadows.medium,
+    ...getShadow('medium'),
     minHeight: 52,
   },
   submitButtonDisabled: {

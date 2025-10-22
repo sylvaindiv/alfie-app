@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, Platform } from 'react-native';
 import {
   useFonts,
   Montserrat_400Regular,
@@ -18,7 +18,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { Colors } from './src/theme';
 
 export default function App() {
-  // Charger les polices
+  // Skip font loading on web for now to test
   const [fontsLoaded] = useFonts({
     Montserrat_400Regular,
     Montserrat_500Medium,
@@ -31,8 +31,8 @@ export default function App() {
     Nunito_700Bold,
   });
 
-  // Afficher un loader pendant le chargement des polices
-  if (!fontsLoaded) {
+  // On web, skip font loading check
+  if (!fontsLoaded && Platform.OS !== 'web') {
     return (
       <View
         style={{
@@ -42,7 +42,7 @@ export default function App() {
           backgroundColor: Colors.background,
         }}
       >
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text>Loading...</Text>
       </View>
     );
   }
