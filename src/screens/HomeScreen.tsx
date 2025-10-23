@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
-  SafeAreaView,
   Alert,
   Image,
   ScrollView,
@@ -14,6 +13,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import type { ImageStyle } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { supabase } from '../config/supabase';
 import {

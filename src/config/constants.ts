@@ -6,7 +6,8 @@
  * 2. Activer les APIs suivantes :
  *    - Places API
  *    - Geocoding API
- * 3. Remplacer 'YOUR_GOOGLE_API_KEY' par votre clé API
+ * 3. Ajouter votre clé API dans le fichier .env
+ *    EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=votre_clé_api
  */
 
-export const GOOGLE_PLACES_API_KEY = 'AIzaSyCTCy3-4KprxklrDyA0u-SnSI0lW5uZL-0';
+export const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || '';

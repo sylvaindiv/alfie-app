@@ -16,8 +16,10 @@ import ChoixTypeRecoScreen from '../screens/ChoixTypeRecoScreen';
 import DealsScreen from '../screens/DealsScreen';
 import DealDetailScreen from '../screens/DealDetailScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import EntrepriseManagementScreen from '../screens/EntrepriseManagementScreen';
 import { Colors } from '../theme';
 import { supabase } from '../config/supabase';
+import { useHasEntreprise } from '../hooks/useHasEntreprise';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -49,6 +51,8 @@ function DealsStack() {
 
 // Tab Navigator principal (app authentifiée)
 function MainTabNavigator() {
+  const { hasEntreprise, loading } = useHasEntreprise();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -59,6 +63,8 @@ function MainTabNavigator() {
             iconName = 'home';
           } else if (route.name === 'Deals') {
             iconName = 'list';
+          } else if (route.name === 'Entreprise') {
+            iconName = 'briefcase';
           } else if (route.name === 'Profile') {
             iconName = 'user';
           } else {
@@ -82,6 +88,13 @@ function MainTabNavigator() {
         component={DealsStack}
         options={{ tabBarLabel: 'Mes deals' }}
       />
+      {!loading && hasEntreprise && (
+        <Tab.Screen
+          name="Entreprise"
+          component={EntrepriseManagementScreen}
+          options={{ tabBarLabel: 'Entreprise' }}
+        />
+      )}
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
